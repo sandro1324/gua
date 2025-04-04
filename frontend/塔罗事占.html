@@ -1,0 +1,1008 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tarot Reading</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-dark: #0a0a25;
+            --primary-medium: #1a1a3a;
+            --accent-gold: #d4af37;
+            --accent-purple: #6a0dad;
+            --text-light: #f8f8ff;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-medium) 50%, var(--primary-dark) 100%);
+            color: var(--text-light);
+            min-height: 100vh;
+            padding: 20px;
+            margin: 0;
+        }
+
+        /* Title Area */
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            background: linear-gradient(to right, #fff, var(--accent-gold), #fff);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 0 0 10px rgba(212, 175, 55, 0.3);
+        }
+
+        /* Back Button */
+        .back-button {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: var(--accent-gold);
+            text-decoration: none;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+
+        .back-button:hover {
+            transform: translateX(-5px);
+        }
+
+        .back-button i {
+            margin-right: 8px;
+        }
+
+        /* Question Input Area */
+        .question-box {
+            max-width: 600px;
+            margin: 2rem auto;
+            padding: 25px;
+            border: 2px solid var(--accent-gold);
+            border-radius: 15px;
+            box-shadow: 0 0 20px rgba(212, 175, 55, 0.2);
+            background: rgba(10, 10, 37, 0.5);
+            transition: all 0.5s ease;
+        }
+
+        .question-box h2 {
+            text-align: center;
+            margin-top: 0;
+            color: var(--accent-gold);
+        }
+
+        #questionInput {
+            width: 100%;
+            padding: 15px;
+            margin: 1rem 0;
+            background: rgba(0,0,0,0.3);
+            border: 1px solid var(--accent-gold);
+            border-radius: 10px;
+            color: var(--text-light);
+            font-size: 1rem;
+            resize: vertical;
+            box-sizing: border-box;
+        }
+
+        #questionInput:focus {
+            outline: none;
+            box-shadow: 0 0 10px rgba(212, 175, 55, 0.3);
+        }
+
+        #startBtn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(to right, #7b4397, #dc2430);
+            color: var(--text-light);
+            border: none;
+            border-radius: 30px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+            font-family: inherit;
+        }
+
+        #startBtn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(123, 67, 151, 0.3);
+        }
+
+        /* Card Spread Container */
+        .card-spread {
+            display: grid;
+            gap: 30px;
+            margin: 2rem auto;
+            max-width: 1000px;
+            opacity: 0;
+            transition: opacity 0.8s ease;
+        }
+
+        /* Set different grid layouts based on spread type */
+        .card-spread.three-card {
+            grid-template-columns: repeat(3, 1fr);
+        }
+
+        .card-spread.celtic-cross {
+            grid-template-columns: repeat(4, 1fr);
+            grid-template-rows: repeat(3, auto);
+            grid-template-areas:
+                ". top . ."
+                "left center right advice"
+                ". bottom fears outcome";
+        }
+
+        .card-spread.wheel-of-year {
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(4, auto);
+        }
+
+        /* Card Interactions */
+        .tarot-card {
+            width: 160px;
+            height: 280px;
+            perspective: 1000px;
+            cursor: pointer;
+            margin: 0 auto;
+            position: relative;
+            transform-style: preserve-3d;
+            overflow: visible;
+        }
+
+        .position-label {
+            position: absolute;
+            bottom: -30px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            font-size: 0.9rem;
+            color: var(--accent-gold);
+        }
+
+        .card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transform-style: preserve-3d;
+            transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .tarot-card.flipped .card-inner {
+            transform: rotateY(180deg);
+        }
+
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 15px;
+            border: 2px solid var(--accent-gold);
+            background-size: cover;
+            background-position: center;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .card-back {
+            background: url('/%E5%8D%A6/frontend/assets/tarot/card-back.png') center/cover;
+        }
+
+        .card-front {
+            transform: rotateY(180deg);
+            background-color: rgba(0,0,0,0.5) !important;
+            backface-visibility: visible !important;
+            will-change: transform;
+        }
+
+        /* Card Number Display */
+        .card-number {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            font-size: 14px;
+            color: var(--accent-gold);
+            background: rgba(0,0,0,0.7);
+            padding: 2px 5px;
+            border-radius: 3px;
+            z-index: 2;
+        }
+
+        /* Error Badge */
+        .error-badge {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #ff4444;
+            font-size: 2em;
+            text-shadow: 0 0 5px black;
+            background: rgba(0,0,0,0.7);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 3;
+        }
+
+        /* Interpretation Modal */
+        .interpretation-modal {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: var(--primary-dark);
+            padding: 25px;
+            border: 2px solid var(--accent-gold);
+            border-radius: 15px;
+            max-width: 400px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            z-index: 1000;
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.7);
+        }
+
+        .interpretation-modal h3 {
+            color: var(--accent-gold);
+            margin-top: 0;
+            text-align: center;
+            font-size: 1.5rem;
+        }
+
+        .interpretation-modal p {
+            margin: 15px 0;
+            line-height: 1.6;
+        }
+
+        .interpretation-modal button {
+            background: transparent;
+            border: 1px solid var(--accent-gold);
+            color: var(--accent-gold);
+            padding: 10px 20px;
+            margin-top: 20px;
+            border-radius: 30px;
+            cursor: pointer;
+            display: block;
+            margin-left: auto;
+            transition: all 0.3s ease;
+            font-family: inherit;
+        }
+
+        .interpretation-modal button:hover {
+            background: var(--accent-gold);
+            color: var(--primary-dark);
+        }
+
+        /* Loading Animation */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--primary-dark);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            opacity: 1;
+            transition: opacity 0.5s ease;
+        }
+
+        .loading-overlay.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .spinner {
+            width: 70px;
+            height: 70px;
+            border: 5px solid transparent;
+            border-top: 5px solid var(--accent-gold);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            font-size: 1.2rem;
+            color: var(--accent-gold);
+            text-align: center;
+        }
+
+        /* Shuffle Animation */
+        @keyframes shuffle {
+            0% { transform: translateY(0) rotate(0deg); }
+            25% { transform: translateY(-30px) rotate(5deg); }
+            50% { transform: translateY(0) rotate(-5deg); }
+            75% { transform: translateY(-15px) rotate(3deg); }
+            100% { transform: translateY(0) rotate(0deg); }
+        }
+
+        .shuffle-animation {
+            animation: shuffle 1s ease;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .card-spread {
+                gap: 20px;
+            }
+
+            .card-spread.three-card {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .card-spread.celtic-cross {
+                grid-template-columns: repeat(2, 1fr);
+                grid-template-areas: unset;
+            }
+
+            .card-spread.wheel-of-year {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .tarot-card {
+                width: 140px;
+                height: 240px;
+            }
+        }
+
+        /* 移动端适配 */
+        @media (hover: none) {
+            .tarot-card {
+                cursor: default;
+                -webkit-tap-highlight-color: transparent;
+            }
+        }
+
+        /* 加载动画样式 */
+        .loading-dot {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 20px;
+            height: 20px;
+            background: var(--accent-gold);
+            border-radius: 50%;
+            animation: pulse 1s infinite;
+            z-index: 2;
+        }
+
+        @keyframes pulse {
+            0% { transform: translate(-50%, -50%) scale(0.8); opacity: 0.5; }
+            50% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
+            100% { transform: translate(-50%, -50%) scale(0.8); opacity: 0.5; }
+        }
+
+        /* Coze Chat 样式 */
+        .loading-dots {
+            display: inline-block;
+            padding: 15px;
+        }
+        .dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            margin: 0 4px;
+            background: var(--accent-gold);
+            border-radius: 50%;
+            animation: dot-pulse 1.4s infinite;
+        }
+        .dot:nth-child(2) { animation-delay: 0.2s; }
+        .dot:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes dot-pulse {
+            0%, 60%, 100% { transform: translateY(0); }
+            30% { transform: translateY(-10px); }
+        }
+
+        .coze-message {
+            margin: 10px 0;
+            padding: 10px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 8px;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* 解读输出区域样式 */
+        .interpretation-output {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 350px;
+            background: var(--primary-dark);
+            border: 2px solid var(--accent-gold);
+            border-radius: 15px;
+            box-shadow: 0 0 20px rgba(212, 175, 55, 0.3);
+            z-index: 1000;
+        }
+
+        .interpretation-header {
+            padding: 15px;
+            border-bottom: 1px solid var(--accent-gold);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: move;
+        }
+
+        .interpretation-header h3 {
+            margin: 0;
+            color: var(--accent-gold);
+        }
+
+        .interpretation-content {
+            height: 400px;
+            overflow-y: auto;
+            padding: 15px;
+            color: var(--text-light);
+        }
+
+        .interpretation-message {
+            margin: 10px 0;
+            padding: 10px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 8px;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            color: var(--accent-gold);
+            cursor: pointer;
+            font-size: 1.2rem;
+            padding: 5px;
+        }
+
+        .close-btn:hover {
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading Animation -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner"></div>
+        <p class="loading-text">Connecting to Mystical Forces...</p>
+    </div>
+
+    <!-- Back Button -->
+    <a href="塔罗主牌.html" class="back-button">
+        <i class="fas fa-arrow-left"></i> Back
+    </a>
+
+    <!-- Title -->
+    <div class="header">
+        <h1>Elemental Tarot Reading</h1>
+    </div>
+
+    <!-- Question Input -->
+    <div class="question-box" id="questionBox">
+        <h2>Write Your Question</h2>
+        <textarea 
+            id="questionInput"
+            placeholder="Example: How will my career develop in the next three months?..."
+            rows="3"
+        ></textarea>
+        <button id="startBtn">
+            Start Reading
+        </button>
+    </div>
+
+    <!-- Card Spread Container -->
+    <div class="card-spread" id="cardSpread"></div>
+
+    <!-- 解读输出区域 -->
+    <div class="interpretation-output" id="interpretationOutput">
+        <div class="interpretation-header">
+            <h3>🔮 Tarot Reading</h3>
+            <button class="close-btn" onclick="this.parentElement.parentElement.style.display='none'">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="interpretation-content" id="interpretationContent">
+            <div class="interpretation-message">
+                <p>Click on a card to get interpretation...</p>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { majorArcana, minorArcana, getCardImagePath, spreadPositions, validateCardPath } from './js/core/tarotDB.js';
+
+        // Initialize parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const spreadType = urlParams.get('spread') || 'three-card';
+        let isReadingActive = false;
+        let spreadPositionNames = [];
+        let currentQuestion = '';
+
+        // DOM elements
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        const questionBox = document.getElementById('questionBox');
+        const startBtn = document.getElementById('startBtn');
+        const cardSpread = document.getElementById('cardSpread');
+        const interpretationOutput = document.getElementById('interpretationOutput');
+        const interpretationContent = document.getElementById('interpretationContent');
+        
+        // 修改基础路径配置
+        const basePath = '/%E5%8D%A6/frontend/assets/tarot';
+        
+        // 音效路径配置
+        const soundPaths = {
+            shuffle: `${basePath}/sounds/shuffle.mp3`,
+            flip: `${basePath}/sounds/flip.mp3`,
+            reveal: `${basePath}/sounds/reveal.mp3`
+        };
+        
+        // 验证音效路径
+        console.log('[DEBUG] 音效路径验证:', {
+            shuffle: soundPaths.shuffle,
+            flip: soundPaths.flip,
+            reveal: soundPaths.reveal
+        });
+        
+        // 音效对象
+        const sounds = {};
+
+        // 获取所有卡牌
+        function getAllCards() {
+            return [
+                ...Object.values(majorArcana),
+                ...Object.values(minorArcana.wands),
+                ...Object.values(minorArcana.cups),
+                ...Object.values(minorArcana.swords),
+                ...Object.values(minorArcana.pentacles)
+            ];
+        }
+
+        // 激活卡牌交互
+        function activateCards() {
+            isReadingActive = true;
+            const cards = document.querySelectorAll('.tarot-card');
+            
+            // 使用正确的Worker路径
+            const worker = new Worker('/%E5%8D%A6/frontend/js/workers/tarotWorker.js');
+            
+            // 发送洗牌请求
+            worker.postMessage({
+                deck: getAllCards(),
+                spreadType
+            });
+
+            // 接收处理结果
+            worker.onmessage = function(e) {
+                if (e.data.success) {
+                    e.data.cards.forEach((card, index) => {
+                        bindCardInteraction(cards[index], card, index);
+                    });
+                }
+            };
+
+            // 错误处理
+            worker.onerror = function(e) {
+                console.error('Worker错误:', e);
+            };
+        }
+
+        // 修改卡牌点击处理
+        function handleCardClick(cardElement, cardData, cardIndex) {
+            if (!isReadingActive || cardElement.classList.contains('flipped')) return;
+
+            const front = cardElement.querySelector('.card-front');
+            
+            // 添加加载状态指示
+            front.innerHTML = '<div class="loading-dot"></div>';
+            
+            // 获取图片路径
+            const imagePath = getCardImagePath(cardData);
+            if (!imagePath) {
+                console.error('Invalid image path:', cardData);
+                front.innerHTML = '<div class="error-badge">?</div>';
+                return;
+            }
+            
+            // 显示解读输出区域
+            interpretationOutput.style.display = 'block';
+            
+            // 添加加载动画到解读区域
+            interpretationContent.innerHTML = `
+                <div class="interpretation-message">
+                    <div class="loading-dots">
+                        <div class="dot"></div>
+                        <div class="dot"></div>
+                        <div class="dot"></div>
+                    </div>
+                </div>
+            `;
+            
+            // 验证并加载图片
+            validateCardPath(imagePath)
+                .then(() => {
+                    console.log('卡牌加载成功:', {
+                        path: imagePath,
+                        card: cardData.nameEN
+                    });
+                    front.style.backgroundImage = `url('${imagePath}')`;
+                    cardElement.classList.add('flipped');
+                    playSound('flip');
+
+                    // 添加卡牌编号
+                    const cardNumber = document.createElement('div');
+                    cardNumber.className = 'card-number';
+                    cardNumber.textContent = `No. ${String(cardData.id).padStart(2, '0')}`;
+                    front.appendChild(cardNumber);
+
+                    // 获取位置信息
+                    const position = spreadPositions[spreadType][cardIndex]?.nameEN || `Position ${cardIndex + 1}`;
+                    
+                    // 获取塔罗牌解读
+                    getTarotReading(currentQuestion, cardData.name, position)
+                        .then(reading => {
+                            if (reading) {
+                                interpretationContent.innerHTML = `
+                                    <div class="interpretation-message">
+                                        <h4>${cardData.nameEN} - ${position}</h4>
+                                        <p>${reading}</p>
+                                    </div>
+                                `;
+                            } else {
+                                interpretationContent.innerHTML = `
+                                    <div class="interpretation-message">
+                                        <p>获取解读失败，请重试...</p>
+                                    </div>
+                                `;
+                            }
+                        })
+                        .catch(error => {
+                            console.error('获取解读失败:', error);
+                            interpretationContent.innerHTML = `
+                                <div class="interpretation-message">
+                                    <p>获取解读失败，请重试...</p>
+                                </div>
+                            `;
+                        });
+
+                    setTimeout(() => {
+                        showInterpretation(cardData, cardIndex);
+                    }, 500);
+                })
+                .catch(error => {
+                    console.error('卡牌加载失败详情:', {
+                        path: imagePath,
+                        error: error.message,
+                        card: cardData.nameEN,
+                        originalImage: cardData.image
+                    });
+                    front.innerHTML = '<div class="error-badge">?</div>';
+                });
+        }
+
+        // 绑定卡牌交互
+        function bindCardInteraction(cardElement, cardData, cardIndex) {
+            // 点击事件
+            cardElement.addEventListener('click', () => {
+                handleCardClick(cardElement, cardData, cardIndex);
+            });
+            
+            // 触摸事件
+            cardElement.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                handleCardClick(cardElement, cardData, cardIndex);
+            });
+        }
+
+        // 播放音效
+        function playSound(name) {
+            if (sounds[name]) {
+                sounds[name].currentTime = 0;
+                sounds[name].play().catch(e => {
+                    console.warn(`音效播放失败: ${name}`, e);
+                });
+            }
+        }
+
+        // Check if resources are loaded
+        function hideLoadingOverlay() {
+            console.log('隐藏加载动画');
+            loadingOverlay.classList.add('hidden');
+            setTimeout(() => {
+                loadingOverlay.style.display = 'none';
+            }, 500);
+        }
+
+        // 预加载卡背图
+        function preloadCardBack() {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.src = `${basePath}/card-back.png`;
+                
+                img.onload = () => {
+                    console.log('卡背图加载成功');
+                    resolve();
+                };
+                
+                img.onerror = (e) => {
+                    console.error('卡背图加载失败:', e);
+                    console.log('尝试路径:', img.src);
+                    reject(e);
+                };
+            });
+        }
+
+        // 预加载音效
+        function preloadSounds() {
+            return Promise.all(Object.entries(soundPaths).map(([name, path]) => {
+                return new Promise((resolve, reject) => {
+                    console.log(`[DEBUG] 开始加载音效: ${name}, 路径: ${path}`);
+                    const audio = new Audio();
+                    audio.addEventListener('canplaythrough', () => {
+                        console.log(`[DEBUG] 音效加载成功: ${name}`);
+                        sounds[name] = audio;
+                        resolve();
+                    });
+                    audio.addEventListener('error', (e) => {
+                        console.warn(`[DEBUG] 音效加载失败: ${name}`, e);
+                        resolve(); // 即使失败也继续
+                    });
+                    audio.src = path;
+                });
+            }));
+        }
+
+        // 初始化函数
+        async function initialize() {
+            try {
+                console.log('开始初始化...');
+                // 预加载资源
+                await Promise.all([
+                    preloadCardBack(),
+                    preloadSounds()
+                ]);
+                console.log('资源加载完成');
+                
+                // 立即隐藏加载动画
+                loadingOverlay.style.display = 'none';
+                
+                // 显示问题框
+                questionBox.style.display = 'block';
+                questionBox.style.opacity = '1';
+                
+            } catch (error) {
+                console.error('Initialization failed:', error);
+                const errorMessage = document.createElement('div');
+                errorMessage.className = 'error-message';
+                errorMessage.innerHTML = `<i class="fas fa-exclamation-circle"></i> Resource loading failed, please refresh the page`;
+                document.body.appendChild(errorMessage);
+                
+                // 隐藏加载动画
+                loadingOverlay.style.display = 'none';
+                
+                // 显示问题框
+                questionBox.style.display = 'block';
+                questionBox.style.opacity = '1';
+            }
+        }
+
+        // 页面加载完成后初始化
+        if (document.readyState === 'complete') {
+            initialize();
+        } else {
+            window.addEventListener('load', initialize);
+        }
+
+        // 初始化布局
+        function initSpreadLayout() {
+            if (spreadType === 'celtic-cross') {
+                cardSpread.style.gridTemplateAreas = 
+                    "'. top . .' " +
+                    "'left center right advice' " +
+                    "'. bottom fears outcome'";
+            } else if (spreadType === 'wheel-of-year') {
+                cardSpread.style.maxWidth = '800px';
+            }
+        }
+
+        // 显示解读
+        function showInterpretation(card, position) {
+            playSound('reveal');
+            
+            const positionText = spreadPositionNames[position] ? 
+                `<p><strong>Position:</strong> ${spreadPositionNames[position]}</p>` : '';
+            
+            const modal = document.createElement('div');
+            modal.className = 'interpretation-modal';
+            modal.innerHTML = `
+                <h3>${card.nameEN}</h3>
+                <div class="card-number">No. ${card.image.split('.')[0]}</div>
+                ${positionText}
+                <p><strong>Keywords:</strong> ${(card.keywordsEN || []).join(', ')}</p>
+                <p><strong>Upright:</strong> ${card.meanings.upright}</p>
+                ${card.meanings.reversed ? `<p><strong>Reversed:</strong> ${card.meanings.reversed}</p>` : ''}
+                <button onclick="this.parentElement.remove()">Close</button>
+            `;
+            document.body.appendChild(modal);
+        }
+
+        // 绑定开始按钮点击事件
+        startBtn.addEventListener('click', () => {
+            currentQuestion = document.getElementById('questionInput').value.trim();
+            if (!currentQuestion) {
+                showError('请输入您的问题');
+                return;
+            }
+
+            // 显示加载动画
+            loadingOverlay.style.display = 'flex';
+            loadingOverlay.classList.remove('hidden');
+            
+            // 隐藏问题框
+            questionBox.style.opacity = '0';
+            
+            setTimeout(() => {
+                loadingOverlay.classList.add('hidden');
+                questionBox.style.display = 'none';
+                
+                // 创建牌阵
+                createSpread();
+                cardSpread.style.opacity = '1';
+                
+                // 激活卡牌
+                activateCards();
+            }, 2000);
+        });
+
+        // Set spread style based on type
+        cardSpread.classList.add(spreadType);
+        
+        // Get position names
+        if (spreadPositions[spreadType]) {
+            spreadPositionNames = spreadPositions[spreadType].map(pos => pos.nameEN);
+        }
+
+        // Initialize title based on spread type
+        const spreadTitles = {
+            'three-card': 'Three Card Spread Reading',
+            'celtic-cross': 'Celtic Cross Spread Reading',
+            'wheel-of-year': 'Wheel of the Year Reading'
+        };
+        document.querySelector('.header h1').textContent = spreadTitles[spreadType] || 'Elemental Tarot Reading';
+
+        // Create spread
+        function createSpread() {
+            const spreadMap = {
+                'three-card': 3,
+                'celtic-cross': 10,
+                'wheel-of-year': 12
+            };
+            
+            const numCards = spreadMap[spreadType] || 3;
+            cardSpread.innerHTML = '';
+
+            // Set spread layout
+            initSpreadLayout();
+
+            // Generate cards
+            for (let i = 0; i < numCards; i++) {
+                const card = document.createElement('div');
+                card.className = 'tarot-card';
+                
+                // Set specific grid position for Celtic Cross
+                if (spreadType === 'celtic-cross') {
+                    const areaMap = ['center', 'center', 'left', 'right', 'top', 'bottom', 'advice', 'external', 'fears', 'outcome'];
+                    if (i > 0) {
+                        card.style.gridArea = areaMap[i];
+                    }
+                }
+                
+                // Card HTML structure
+                card.innerHTML = `
+                    <div class="card-inner">
+                        <div class="card-face card-back"></div>
+                        <div class="card-face card-front"></div>
+                    </div>
+                    <div class="position-label">${spreadPositionNames[i] || `Position ${i + 1}`}</div>
+                `;
+                
+                cardSpread.appendChild(card);
+            }
+        }
+
+        // 显示错误信息
+        function showError(message) {
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error-message';
+            errorDiv.innerHTML = `
+                <i class="fas fa-exclamation-circle"></i> ${message}
+                <div class="error-details" style="font-size: 0.8em; margin-top: 5px; color: #ff9999;">
+                    Check console for details
+                </div>
+            `;
+            document.body.appendChild(errorDiv);
+
+            setTimeout(() => {
+                errorDiv.remove();
+            }, 5000);
+        }
+
+        // 获取塔罗牌解读
+        async function getTarotReading(question, cardName, position) {
+            try {
+                const response = await fetch('http://localhost:5000/api/tarot', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        question,
+                        card_name: cardName,
+                        position
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'API请求失败');
+                }
+
+                const data = await response.json();
+                return data.interpretation;
+            } catch (error) {
+                console.error('获取解读失败:', error);
+                return null;
+            }
+        }
+
+        // 添加流式解读支持
+        function startStreamingReading(question, cardName, position) {
+            const eventSource = new EventSource(`http://localhost:5000/api/tarot/stream?question=${encodeURIComponent(question)}&card_name=${encodeURIComponent(cardName)}&position=${encodeURIComponent(position)}`);
+            
+            eventSource.onmessage = function(event) {
+                const data = JSON.parse(event.data);
+                if (data.interpretation) {
+                    interpretationContent.innerHTML = `
+                        <div class="interpretation-message">
+                            <h4>${cardName} - ${position}</h4>
+                            <p>${data.interpretation}</p>
+                        </div>
+                    `;
+                }
+            };
+
+            eventSource.onerror = function(error) {
+                console.error('流式请求错误:', error);
+                eventSource.close();
+                interpretationContent.innerHTML = `
+                    <div class="interpretation-message">
+                        <p>获取解读失败，请重试...</p>
+                    </div>
+                `;
+            };
+
+            return eventSource;
+        }
+    </script>
+</body>
+</html>

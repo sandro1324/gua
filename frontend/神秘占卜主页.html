@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>神秘占卜</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Microsoft YaHei', sans-serif;
+            overflow: hidden;
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            background: linear-gradient(135deg, #0a0a25 0%, #1a1a3a 50%, #0a0a25 100%);
+        }
+        
+        /* 星空背景 */
+        .stars-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            overflow: hidden;
+        }
+        
+        .star {
+            position: absolute;
+            background-color: white;
+            border-radius: 50%;
+            animation: twinkle 4s infinite ease-in-out;
+        }
+        
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.2; }
+            50% { opacity: 1; }
+        }
+        
+        /* 流动星轨 */
+        .star-trail {
+            position: absolute;
+            width: 200px;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.8), transparent);
+            transform-origin: left center;
+            animation: moveStar 8s linear infinite;
+            opacity: 0.4;
+        }
+        
+        @keyframes moveStar {
+            0% { transform: translateX(-100%) rotate(0deg); opacity: 0; }
+            10% { opacity: 0.8; }
+            90% { opacity: 0.8; }
+            100% { transform: translateX(100vw) rotate(0deg); opacity: 0; }
+        }
+        
+        /* 中央能量漩涡 */
+        .energy-vortex {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 300px;
+            height: 300px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(0,30,60,0.6) 0%, rgba(0,0,0,0) 70%);
+            animation: rotate 20s linear infinite;
+            z-index: 1;
+        }
+        
+        .vortex-line {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 100%;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(100, 180, 255, 0.3), transparent);
+            transform-origin: center;
+        }
+        
+        @keyframes rotate {
+            0% { transform: translate(-50%, -50%) rotate(0deg); }
+            100% { transform: translate(-50%, -50%) rotate(360deg); }
+        }
+        
+        /* 水晶球 */
+        .crystal-ball {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 180px;
+            height: 180px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, 
+                                      rgba(255, 255, 255, 0.9), 
+                                      rgba(200, 220, 255, 0.2) 30%,
+                                      rgba(100, 180, 255, 0.3) 70%,
+                                      rgba(50, 120, 200, 0.4));
+            box-shadow: 0 0 30px rgba(100, 180, 255, 0.6),
+                        inset 0 0 30px rgba(255, 255, 255, 0.4);
+            z-index: 3;
+            cursor: pointer;
+            animation: pulseGlow 4s infinite ease-in-out;
+        }
+        
+        .crystal-ball::before {
+            content: '';
+            position: absolute;
+            top: 15%;
+            left: 15%;
+            width: 30%;
+            height: 30%;
+            border-radius: 50%;
+            background-color: rgba(255, 255, 255, 0.7);
+            filter: blur(5px);
+        }
+        
+        @keyframes pulseGlow {
+            0%, 100% { box-shadow: 0 0 30px rgba(100, 180, 255, 0.6),
+                                  inset 0 0 30px rgba(255, 255, 255, 0.4); }
+            50% { box-shadow: 0 0 50px rgba(100, 180, 255, 0.8),
+                             inset 0 0 50px rgba(255, 255, 255, 0.6); }
+        }
+        
+        /* 导航按钮 */
+        .nav-button {
+            position: absolute;
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background-color: rgba(10, 20, 40, 0.6);
+            border: 2px solid rgba(100, 180, 255, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            z-index: 10;
+            box-shadow: 0 0 15px rgba(100, 180, 255, 0.2);
+        }
+        
+        .nav-button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 25px rgba(100, 180, 255, 0.6);
+        }
+        
+        .nav-button .symbol {
+            font-size: 2rem;
+            opacity: 0.9;
+        }
+        
+        .nav-north {
+            top: 15%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: radial-gradient(circle, rgba(10, 20, 40, 0.6), rgba(0, 10, 30, 0.8));
+        }
+        
+        .nav-east {
+            top: 50%;
+            right: 15%;
+            transform: translateY(-50%);
+            background: radial-gradient(circle, rgba(30, 25, 5, 0.6), rgba(40, 30, 5, 0.8));
+        }
+        
+        .nav-west {
+            top: 50%;
+            left: 15%;
+            transform: translateY(-50%);
+            background: radial-gradient(circle, rgba(5, 15, 35, 0.6), rgba(10, 20, 50, 0.8));
+        }
+        
+        .nav-south {
+            bottom: 15%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: radial-gradient(circle, rgba(30, 10, 15, 0.6), rgba(40, 5, 10, 0.8));
+        }
+        
+        /* 导航标签 */
+        .nav-label {
+            position: absolute;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 1rem;
+            text-align: center;
+            width: 100px;
+            opacity: 1;
+            text-shadow: 0 0 5px rgba(0, 0, 0, 0.8);
+        }
+        
+        .nav-north + .nav-label {
+            top: calc(15% + 90px);
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        
+        .nav-east + .nav-label {
+            top: 50%;
+            right: calc(15% + 90px);
+            transform: translateY(-50%);
+        }
+        
+        .nav-west + .nav-label {
+            top: 50%;
+            left: calc(15% + 90px);
+            transform: translateY(-50%);
+        }
+        
+        .nav-south + .nav-label {
+            bottom: calc(15% + 90px);
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        
+        /* 焚香进度条 */
+        .incense-container {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 300px;
+            height: 5px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            overflow: hidden;
+            z-index: 20;
+        }
+        
+        .incense-progress {
+            width: 0%;
+            height: 100%;
+            background: linear-gradient(90deg, rgba(255, 180, 100, 0.6), rgba(255, 120, 50, 0.8));
+            border-radius: 3px;
+            position: relative;
+            animation: incenseWave 2s ease-in-out infinite;
+        }
+        
+        @keyframes incenseWave {
+            0%, 100% { transform: scaleY(1); }
+            50% { transform: scaleY(1.5); }
+        }
+        
+        /* 悬浮光点 */
+        .light-orb {
+            position: absolute;
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            filter: blur(5px);
+            z-index: 2;
+            animation: float 10s infinite ease-in-out;
+        }
+        
+        .orb-north {
+            top: 15%;
+            left: 50%;
+            background-color: rgba(180, 220, 255, 0.8);
+            animation-delay: 0s;
+        }
+        
+        .orb-east {
+            top: 50%;
+            right: 15%;
+            background-color: rgba(255, 220, 100, 0.8);
+            animation-delay: -2.5s;
+        }
+        
+        .orb-west {
+            top: 50%;
+            left: 15%;
+            background-color: rgba(180, 130, 255, 0.8);
+            animation-delay: -5s;
+        }
+        
+        .orb-south {
+            bottom: 15%;
+            left: 50%;
+            background-color: rgba(255, 120, 120, 0.8);
+            animation-delay: -7.5s;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0); }
+            25% { transform: translate(15px, 15px); }
+            50% { transform: translate(0, 30px); }
+            75% { transform: translate(-15px, 15px); }
+        }
+        
+        /* 浮动签文 */
+        .fortune-text {
+            position: absolute;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 1rem;
+            pointer-events: none;
+            white-space: nowrap;
+            text-shadow: 0 0 5px rgba(0, 0, 0, 0.8);
+            opacity: 0;
+            z-index: 5;
+            animation: floatUp 10s ease-out forwards;
+        }
+        
+        @keyframes floatUp {
+            0% { transform: translateY(20px); opacity: 0; }
+            10% { opacity: 0.9; }
+            90% { opacity: 0.7; }
+            100% { transform: translateY(-100px); opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+    <!-- 星空背景 -->
+    <div class="stars-container" id="starsContainer"></div>
+    
+    <!-- 中央能量漩涡 -->
+    <div class="energy-vortex" id="energyVortex"></div>
+    
+    <!-- 水晶球 -->
+    <div class="crystal-ball" id="crystalBall"></div>
+    
+    <!-- 悬浮光点 -->
+    <div class="light-orb orb-north"></div>
+    <div class="light-orb orb-east"></div>
+    <div class="light-orb orb-west"></div>
+    <div class="light-orb orb-south"></div>
+    
+    <!-- 北方导航 - 太极八字 -->
+    <div class="nav-button nav-north" data-target="用户信息表单.html">
+        <div class="symbol">☯</div>
+    </div>
+    <div class="nav-label">BaZi Analysis</div>
+    
+    <!-- 东方导航 - 铜钱卦象 -->
+    <div class="nav-button nav-east" data-target="东方占卜.html">
+        <div class="symbol">☱</div>
+    </div>
+    <div class="nav-label">Eastern Divination</div>
+    
+    <!-- 西方导航 - 塔罗牌 -->
+    <div class="nav-button nav-west" data-target="塔罗主牌.html">
+        <div class="symbol">🃏</div>
+    </div>
+    <div class="nav-label">Tarot Cards</div>
+    
+    <!-- 南方导航 - 四元素 -->
+    <div class="nav-button nav-south" data-target="">
+        <div class="symbol">⚜️</div>
+    </div>
+    <div class="nav-label">Tarot Reading</div>
+    
+    <!-- 焚香进度条 -->
+    <div class="incense-container">
+        <div class="incense-progress" id="incenseProgress"></div>
+    </div>
+
+    <script>
+        // 创建星星
+        const starsContainer = document.getElementById('starsContainer');
+        const starCount = 200;
+        
+        for (let i = 0; i < starCount; i++) {
+            const star = document.createElement('div');
+            star.classList.add('star');
+            
+            // 随机大小和位置
+            const size = Math.random() * 3;
+            const posX = Math.random() * 100;
+            const posY = Math.random() * 100;
+            
+            star.style.width = `${size}px`;
+            star.style.height = `${size}px`;
+            star.style.left = `${posX}%`;
+            star.style.top = `${posY}%`;
+            
+            // 随机闪烁时间
+            star.style.animationDelay = `${Math.random() * 4}s`;
+            
+            starsContainer.appendChild(star);
+        }
+        
+        // 创建星轨
+        for (let i = 0; i < 20; i++) {
+            const trail = document.createElement('div');
+            trail.classList.add('star-trail');
+            
+            // 随机位置和角度
+            const posY = Math.random() * 100;
+            const rotation = Math.random() * 20 - 10;
+            
+            trail.style.top = `${posY}%`;
+            trail.style.transform = `translateX(-100%) rotate(${rotation}deg)`;
+            trail.style.animationDelay = `${Math.random() * 8}s`;
+            
+            starsContainer.appendChild(trail);
+        }
+        
+        // 创建能量漩涡线条
+        const vortex = document.getElementById('energyVortex');
+        for (let i = 0; i < 20; i++) {
+            const line = document.createElement('div');
+            line.classList.add('vortex-line');
+            
+            // 设置旋转角度
+            const rotation = i * 18;
+            line.style.transform = `translate(-50%, -50%) rotate(${rotation}deg)`;
+            
+            vortex.appendChild(line);
+        }
+        
+        // 进度条动画
+        const incenseProgress = document.getElementById('incenseProgress');
+        setTimeout(() => {
+            incenseProgress.style.width = '100%';
+            incenseProgress.style.transition = 'width 3s ease-in-out';
+        }, 500);
+        
+        // 点击空白处显示签文
+        const fortuneTexts = [
+            "天地玄黄，万物生灵",
+            "道法自然，无为而治",
+            "一卦一象，万象天成",
+            "心诚则灵，心静则明",
+            "七星北斗，指引迷途",
+            "观天之道，执天之行",
+            "乾三连，坤六断",
+            "山泽通气，天地交泰",
+            "五行相生，水火既济",
+            "吉凶悔吝，终生之道"
+        ];
+        
+        document.addEventListener('click', (e) => {
+            // 排除点击导航按钮
+            if (!e.target.closest('.nav-button') && !e.target.closest('.crystal-ball')) {
+                const fortuneText = document.createElement('div');
+                fortuneText.classList.add('fortune-text');
+                
+                // 显示随机签文
+                const randomText = fortuneTexts[Math.floor(Math.random() * fortuneTexts.length)];
+                fortuneText.textContent = randomText;
+                
+                // 设置位置为点击位置
+                fortuneText.style.left = `${e.clientX}px`;
+                fortuneText.style.top = `${e.clientY}px`;
+                
+                document.body.appendChild(fortuneText);
+                
+                // 动画结束后移除
+                setTimeout(() => {
+                    fortuneText.remove();
+                }, 10000);
+            }
+        });
+        
+        // 导航按钮交互
+        const navButtons = document.querySelectorAll('.nav-button');
+        
+        navButtons.forEach(button => {
+            // 悬停效果
+            button.addEventListener('mouseenter', () => {
+                // 播放音效
+                const audio = new Audio();
+                
+                // 根据按钮类型播放不同音效
+                if (button.classList.contains('nav-north')) {
+                    audio.src = 'sounds/bell.mp3';
+                } else if (button.classList.contains('nav-east')) {
+                    audio.src = 'sounds/coins.mp3';
+                } else if (button.classList.contains('nav-west')) {
+                    audio.src = 'sounds/cards.mp3';
+                } else if (button.classList.contains('nav-south')) {
+                    audio.src = 'sounds/elements.mp3';
+                }
+                
+                // 播放音效（预先设置音量）
+                audio.volume = 0.3;
+                audio.play().catch(e => console.log('音频播放失败：', e));
+            });
+            
+            // 点击效果
+            button.addEventListener('click', () => {
+                const crystalBall = document.getElementById('crystalBall');
+                
+                // 添加投射符号的效果
+                const symbol = button.querySelector('.symbol').textContent;
+                const projection = document.createElement('div');
+                projection.style.position = 'absolute';
+                projection.style.top = '50%';
+                projection.style.left = '50%';
+                projection.style.transform = 'translate(-50%, -50%)';
+                projection.style.color = 'white';
+                projection.style.fontSize = '3rem';
+                projection.style.opacity = '0';
+                projection.style.transition = 'all 0.5s ease';
+                projection.style.zIndex = '4';
+                projection.textContent = symbol;
+                
+                crystalBall.appendChild(projection);
+                
+                // 动画效果
+                setTimeout(() => {
+                    projection.style.opacity = '1';
+                    projection.style.fontSize = '10rem';
+                }, 50);
+                
+                // 跳转到目标页面
+                setTimeout(() => {
+                    window.location.href = button.dataset.target;
+                }, 800);
+            });
+        });
+        
+        // 水晶球交互
+        const crystalBall = document.getElementById('crystalBall');
+        
+        crystalBall.addEventListener('click', () => {
+            // 随机选择一个导航按钮点击
+            const navButtons = document.querySelectorAll('.nav-button');
+            const randomIndex = Math.floor(Math.random() * navButtons.length);
+            navButtons[randomIndex].click();
+        });
+    </script>
+</body>
+</html> 

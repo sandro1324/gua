@@ -1,0 +1,1218 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>玄机八字分析 - 个人信息录入</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=ZCOOL+QingKe+HuangYou&display=swap" rel="stylesheet">
+    
+    <!-- 加载lunar.js库 -->
+    <script src="../lunar-javascript/lunar.js" onerror="handleLunarLoadError()"></script>
+    
+    <style>
+        /* 更新颜色方案 */
+        :root {
+            --primary: #4a90e2; /* 靛蓝（八卦主色） */
+            --secondary: #8a4fff; /* 紫气东来 */
+            --background: #ffffff; 
+            --text: #2c3e50; 
+            --accent: #e6f0ff; /* 天青辅助色 */
+            --border: #dcdff1;
+        }
+
+        /* 语言切换按钮 */
+        .language-switch {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 100;
+            display: flex;
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(5px);
+            border-radius: 30px;
+            padding: 5px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            border: 1px solid var(--border);
+        }
+
+        .language-btn {
+            padding: 8px 12px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 0.85rem;
+            border-radius: 25px;
+            transition: all 0.3s ease;
+            color: var(--text);
+        }
+
+        .language-btn.active {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            box-shadow: 0 2px 8px rgba(74, 144, 226, 0.3);
+        }
+
+        .language-btn:hover:not(.active) {
+            background: rgba(74, 144, 226, 0.1);
+        }
+
+        /* 动态八卦背景 */
+        body {
+            font-family: 'Segoe UI', '微软雅黑', sans-serif;
+            background: 
+                radial-gradient(circle at 10% 20%, rgba(138,79,255,0.05) 20%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(74,144,226,0.05) 20%, transparent 40%),
+                linear-gradient(135deg, var(--background) 0%, #f8f9ff 100%);
+            color: var(--text);
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* 大八卦背景 */
+        body::after {
+            content: "☯";
+            position: fixed;
+            font-size: 400px;
+            color: rgba(74,144,226,0.02);
+            right: -100px;
+            bottom: -100px;
+            pointer-events: none;
+            z-index: -2;
+            animation: rotateSlow 60s linear infinite;
+        }
+
+        /* 八卦浮动粒子动画 */
+        @keyframes float {
+            0% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(180deg); }
+            100% { transform: translateY(0) rotate(360deg); }
+        }
+
+        @keyframes rotateYinYang {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes rotateSlow {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes pulseGlow {
+            0% { opacity: 0.05; box-shadow: 0 0 5px rgba(74,144,226,0.1); }
+            50% { opacity: 0.15; box-shadow: 0 0 20px rgba(138,79,255,0.3); }
+            100% { opacity: 0.05; box-shadow: 0 0 5px rgba(74,144,226,0.1); }
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 0 20px;
+            flex: 1;
+        }
+
+        .form-header {
+            text-align: center;
+            padding: 2rem;
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            box-shadow: 0 12px 40px rgba(74,144,226,0.1);
+            margin-bottom: 2rem;
+            position: relative;
+        }
+
+        /* 标题设计 */
+        .form-header h1 {
+            font-family: 'ZCOOL QingKe HuangYou', cursive;
+            font-size: 2.8rem;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            color: transparent;
+            letter-spacing: 2px;
+            position: relative;
+            display: inline-block;
+            margin-bottom: 1rem;
+        }
+        
+        /* 动态卦象图标 */
+        .form-header h1::after {
+            content: "䷀"; /* 乾卦Unicode */
+            font-family: 'Segoe UI Symbol';
+            position: absolute;
+            right: -1.2em;
+            top: 0;
+            color: var(--secondary);
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 0.7; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.1); }
+            100% { opacity: 0.7; transform: scale(1); }
+        }
+
+        .form-header p {
+            color: #777;
+            font-style: italic;
+        }
+
+        /* 容器样式 */
+        .form-container {
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            box-shadow: 0 12px 40px rgba(74,144,226,0.1);
+            position: relative;
+            overflow: hidden;
+            padding: 2rem;
+        }
+
+        /* 八卦装饰边框 */
+        .form-container::before {
+            content: '';
+            position: absolute;
+            top: -2px; left: -2px; right: -2px; bottom: -2px;
+            background: linear-gradient(135deg, 
+                var(--primary) 0%, 
+                var(--secondary) 50%,
+                var(--primary) 100%
+            );
+            z-index: -1;
+            border-radius: 14px;
+            animation: rotateBorder 6s linear infinite;
+        }
+
+        @keyframes rotateBorder {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* 表单元素 */
+        .form-group {
+            margin-bottom: 1.8rem;
+            position: relative;
+        }
+
+        label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 1.1rem;
+            color: var(--text);
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        input, select {
+            width: 100%;
+            background: var(--accent);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px 16px;
+            font-size: 1rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        input:focus, select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(74,144,226,0.1);
+            outline: none;
+        }
+
+        /* 卦象按钮 */
+        button {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            padding: 14px 0;
+            border-radius: 8px;
+            font-weight: 500;
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border: none;
+            font-size: 1rem;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        button::before {
+            content: "☯";
+            position: absolute;
+            left: -30px;
+            opacity: 0.3;
+            font-size: 1.2rem;
+            transition: all 0.8s ease;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(74,144,226,0.3);
+            background: linear-gradient(135deg, var(--primary), var(--secondary), var(--primary));
+            background-size: 200% 100%;
+            animation: gradientShift 2s ease infinite;
+        }
+
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        button:hover::before {
+            left: calc(100% + 30px);
+        }
+        
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: none;
+            border-left: 5px solid #f5c6cb;
+        }
+        
+        .warning-box {
+            background: #fff3cd;
+            color: #856404;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border-left: 5px solid #ffeeba;
+            display: flex;
+            align-items: center;
+        }
+        
+        .warning-box i {
+            margin-right: 10px;
+            font-size: 1.2rem;
+        }
+        
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255,255,255,0.9);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 999;
+            backdrop-filter: blur(10px);
+        }
+        
+        /* 加载动画 */
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid var(--accent);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            box-shadow: 0 0 10px rgba(74,144,226,0.2);
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* 移动端优化 */
+        @media (max-width: 768px) {
+            .container {
+                margin: 1rem auto;
+            }
+            
+            .form-header, .form-container {
+                padding: 1.5rem;
+            }
+            
+            .form-header h1 {
+                font-size: 2.2rem;
+            }
+            
+            .form-container::before {
+                animation: none;
+            }
+        }
+        
+        footer {
+            text-align: center;
+            padding: 20px;
+            color: #777;
+            font-size: 0.9rem;
+            background: rgba(255,255,255,0.95);
+            margin-top: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        }
+
+        .checkbox-wrapper {
+            display: flex;
+            align-items: center;
+        }
+
+        .checkbox-wrapper input[type="checkbox"] {
+            width: auto;
+            margin-right: 8px;
+        }
+
+        .checkbox-wrapper label {
+            display: inline;
+            font-weight: normal;
+        }
+
+        /* 浮动八卦粒子 */
+        .floating-ba-gua {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .ba-gua-particle {
+            position: absolute;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            box-shadow: 0 0 15px rgba(74,144,226,0.2);
+            background: radial-gradient(circle, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0) 70%);
+        }
+
+        .ba-gua-1 {
+            top: 15%;
+            left: 8%;
+            width: 100px;
+            height: 100px;
+            font-size: 80px;
+            color: var(--primary);
+            animation: rotateYinYang 12s linear infinite, pulseGlow 8s ease-in-out infinite;
+        }
+
+        .ba-gua-2 {
+            top: 25%;
+            right: 10%;
+            width: 80px;
+            height: 80px;
+            font-size: 60px;
+            color: var(--secondary);
+            animation: rotateSlow 15s linear infinite reverse, pulseGlow 10s ease-in-out infinite 2s;
+        }
+
+        .ba-gua-3 {
+            bottom: 20%;
+            left: 15%;
+            width: 70px;
+            height: 70px;
+            font-size: 55px;
+            color: var(--primary);
+            animation: rotateSlow 18s linear infinite, pulseGlow 9s ease-in-out infinite 1s;
+        }
+
+        /* 语言切换按钮样式 */
+        #languageToggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: #4b2c14;
+            color: #f8e7cf;
+            border: none;
+            border-radius: 30px;
+            padding: 8px 15px;
+            font-size: 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.16);
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+        
+        #languageToggle:hover {
+            background-color: #5c3618;
+            transform: translateY(-2px);
+        }
+        
+        #languageToggle i {
+            margin-right: 5px;
+        }
+        
+        @media (max-width: 768px) {
+            #languageToggle {
+                top: 10px;
+                right: 10px;
+                padding: 6px 12px;
+                font-size: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 加载遮罩 -->
+    <div id="loading-overlay" class="loading-overlay">
+        <div class="spinner"></div>
+        <p style="margin-top: 20px;" data-lang="zh">八字推演中，请稍候...</p>
+        <p style="margin-top: 20px; display: none;" data-lang="en">Computing BaZi chart, please wait...</p>
+    </div>
+
+    <!-- 语言切换按钮 -->
+    <button id="languageToggle"><i class="fas fa-globe"></i> <span id="langBtnText">English</span></button>
+
+    <!-- 添加动态八卦背景 -->
+    <div class="floating-ba-gua">
+        <div class="ba-gua-particle ba-gua-1">☯</div>
+        <div class="ba-gua-particle ba-gua-2">☰</div>
+        <div class="ba-gua-particle ba-gua-3">䷊</div>
+    </div>
+
+    <div class="container">
+        <div class="form-header">
+            <h1 data-lang="zh">玄机八字命理分析</h1>
+            <h1 data-lang="en" style="display: none;">BaZi Destiny Analysis</h1>
+            <p data-lang="zh">天地定位 山泽通气 雷风相薄 水火不相射</p>
+            <p data-lang="en" style="display: none;">Heaven and Earth Set the Stage, Mountain and Lake Exchange Energy</p>
+            
+            <div id="lunar-warning" class="warning-box" style="display: none;">
+                <i class="fas fa-exclamation-triangle"></i>
+                <span data-lang="zh">命理计算库加载失败，将使用简化算法（结果仅供参考）</span>
+                <span data-lang="en" style="display: none;">Astrology calculation library failed to load, using simplified algorithm (results for reference only)</span>
+            </div>
+        </div>
+        
+        <div class="form-container">
+            <div id="error-message" class="error"></div>
+            
+            <form id="user-form">
+                <div class="form-group">
+                    <label for="name"><i class="fas fa-user"></i> <span data-lang="zh">姓名</span><span data-lang="en" style="display: none;">Name</span></label>
+                    <input type="text" id="name" name="name" required placeholder="请输入您的姓名" data-placeholder-zh="请输入您的姓名" data-placeholder-en="Enter your name">
+                </div>
+                
+                <div class="form-group">
+                    <label for="gender"><i class="fas fa-venus-mars"></i> <span data-lang="zh">性别</span><span data-lang="en" style="display: none;">Gender</span></label>
+                    <select id="gender" name="gender" required>
+                        <option value="" data-lang="zh">请选择</option>
+                        <option value="" data-lang="en" style="display: none;">Please select</option>
+                        <option value="男" data-lang="zh">男 (阳)</option>
+                        <option value="男" data-lang="en" style="display: none;">Male (Yang)</option>
+                        <option value="女" data-lang="zh">女 (阴)</option>
+                        <option value="女" data-lang="en" style="display: none;">Female (Yin)</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="birth-country"><i class="fas fa-globe-asia"></i> <span data-lang="zh">出生国家</span><span data-lang="en" style="display: none;">Birth Country</span></label>
+                    <select id="birth-country" name="country">
+                        <option value="" data-lang="zh">请选择国家</option>
+                        <option value="" data-lang="en" style="display: none;">Select Country</option>
+                        <option value="中国" data-lang="zh">中国</option>
+                        <option value="中国" data-lang="en" style="display: none;">China</option>
+                        <option value="美国" data-lang="zh">美国</option>
+                        <option value="美国" data-lang="en" style="display: none;">USA</option>
+                        <option value="加拿大" data-lang="zh">加拿大</option>
+                        <option value="加拿大" data-lang="en" style="display: none;">Canada</option>
+                        <option value="英国" data-lang="zh">英国</option>
+                        <option value="英国" data-lang="en" style="display: none;">UK</option>
+                        <option value="澳大利亚" data-lang="zh">澳大利亚</option>
+                        <option value="澳大利亚" data-lang="en" style="display: none;">Australia</option>
+                        <option value="新西兰" data-lang="zh">新西兰</option>
+                        <option value="新西兰" data-lang="en" style="display: none;">New Zealand</option>
+                        <option value="日本" data-lang="zh">日本</option>
+                        <option value="日本" data-lang="en" style="display: none;">Japan</option>
+                        <option value="韩国" data-lang="zh">韩国</option>
+                        <option value="韩国" data-lang="en" style="display: none;">South Korea</option>
+                        <option value="新加坡" data-lang="zh">新加坡</option>
+                        <option value="新加坡" data-lang="en" style="display: none;">Singapore</option>
+                        <option value="马来西亚" data-lang="zh">马来西亚</option>
+                        <option value="马来西亚" data-lang="en" style="display: none;">Malaysia</option>
+                        <option value="泰国" data-lang="zh">泰国</option>
+                        <option value="泰国" data-lang="en" style="display: none;">Thailand</option>
+                        <option value="法国" data-lang="zh">法国</option>
+                        <option value="法国" data-lang="en" style="display: none;">France</option>
+                        <option value="德国" data-lang="zh">德国</option>
+                        <option value="德国" data-lang="en" style="display: none;">Germany</option>
+                        <option value="意大利" data-lang="zh">意大利</option>
+                        <option value="意大利" data-lang="en" style="display: none;">Italy</option>
+                        <option value="西班牙" data-lang="zh">西班牙</option>
+                        <option value="西班牙" data-lang="en" style="display: none;">Spain</option>
+                        <option value="葡萄牙" data-lang="zh">葡萄牙</option>
+                        <option value="葡萄牙" data-lang="en" style="display: none;">Portugal</option>
+                        <option value="荷兰" data-lang="zh">荷兰</option>
+                        <option value="荷兰" data-lang="en" style="display: none;">Netherlands</option>
+                        <option value="比利时" data-lang="zh">比利时</option>
+                        <option value="比利时" data-lang="en" style="display: none;">Belgium</option>
+                        <option value="瑞士" data-lang="zh">瑞士</option>
+                        <option value="瑞士" data-lang="en" style="display: none;">Switzerland</option>
+                        <option value="瑞典" data-lang="zh">瑞典</option>
+                        <option value="瑞典" data-lang="en" style="display: none;">Sweden</option>
+                        <option value="挪威" data-lang="zh">挪威</option>
+                        <option value="挪威" data-lang="en" style="display: none;">Norway</option>
+                        <option value="丹麦" data-lang="zh">丹麦</option>
+                        <option value="丹麦" data-lang="en" style="display: none;">Denmark</option>
+                        <option value="芬兰" data-lang="zh">芬兰</option>
+                        <option value="芬兰" data-lang="en" style="display: none;">Finland</option>
+                        <option value="俄罗斯" data-lang="zh">俄罗斯</option>
+                        <option value="俄罗斯" data-lang="en" style="display: none;">Russia</option>
+                        <option value="印度" data-lang="zh">印度</option>
+                        <option value="印度" data-lang="en" style="display: none;">India</option>
+                        <option value="巴西" data-lang="zh">巴西</option>
+                        <option value="巴西" data-lang="en" style="display: none;">Brazil</option>
+                        <option value="墨西哥" data-lang="zh">墨西哥</option>
+                        <option value="墨西哥" data-lang="en" style="display: none;">Mexico</option>
+                        <option value="阿根廷" data-lang="zh">阿根廷</option>
+                        <option value="阿根廷" data-lang="en" style="display: none;">Argentina</option>
+                        <option value="南非" data-lang="zh">南非</option>
+                        <option value="南非" data-lang="en" style="display: none;">South Africa</option>
+                        <option value="其他" data-lang="zh">其他</option>
+                        <option value="其他" data-lang="en" style="display: none;">Other</option>
+                    </select>
+                </div>
+                
+                <div class="form-group" id="birth-province-group">
+                    <label for="birth-province"><i class="fas fa-map-marker-alt"></i> <span data-lang="zh">出生省份</span><span data-lang="en" style="display: none;">Birth Province</span></label>
+                    <input type="text" id="birth-province" name="province" placeholder="请输入省份" data-placeholder-zh="请输入省份" data-placeholder-en="Enter province">
+                </div>
+                
+                <div class="form-group">
+                    <label for="birth-date"><i class="fas fa-calendar-alt"></i> <span data-lang="zh">出生日期 (阳历)</span><span data-lang="en" style="display: none;">Birth Date (Solar)</span></label>
+                    <input type="date" id="birth-date" name="birth-date" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="birth-time"><i class="fas fa-clock"></i> <span data-lang="zh">出生时间</span><span data-lang="en" style="display: none;">Birth Time</span></label>
+                    <input type="time" id="birth-time" name="birth-time" required>
+                    <div class="checkbox-wrapper" style="margin-top: 10px;">
+                        <input type="checkbox" id="unknown-time" name="unknown-time">
+                        <label for="unknown-time"><span data-lang="zh">不清楚具体时间</span><span data-lang="en" style="display: none;">Uncertain about exact time</span></label>
+                    </div>
+                </div>
+                
+                <button type="submit" id="submit-btn" data-lang="zh">开始命盘推演</button>
+                <button type="submit" id="submit-btn-en" data-lang="en" style="display: none;">Generate BaZi Chart</button>
+            </form>
+        </div>
+        
+        <footer>
+            <p><i class="fas fa-info-circle"></i> <span data-lang="zh">请确保输入准确的出生日期和时间，以获得精确的分析结果。</span><span data-lang="en" style="display: none;">Please ensure you enter accurate birth date and time for precise analysis results.</span></p>
+            <p data-lang="zh">出生时间使用24小时制，如上午9点输入09:00，下午3点输入15:00。</p>
+            <p data-lang="en" style="display: none;">Birth time uses 24-hour format, e.g. 9AM is 09:00, 3PM is 15:00.</p>
+        </footer>
+    </div>
+    
+    <script>
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('页面初始化开始...');
+            
+            // 检查lunar.js库是否正确加载
+            checkLunarLibrary();
+            
+            // 设置出生日期最大值为今天
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('birth-date').max = today;
+            
+            // 恢复之前的表单数据
+            restoreFormData();
+            
+            // 表单提交处理
+            document.getElementById('user-form').addEventListener('submit', function(e) {
+                e.preventDefault();
+                handleFormSubmit();
+            });
+            
+            // 处理不清楚具体时间的复选框
+            document.getElementById('unknown-time').addEventListener('change', function() {
+                const timeInput = document.getElementById('birth-time');
+                if (this.checked) {
+                    // 保存原来的值
+                    if (timeInput.value) {
+                        timeInput.setAttribute('data-original-value', timeInput.value);
+                    }
+                    // 设置为中午12点
+                    timeInput.value = '12:00';
+                    timeInput.disabled = true;
+                } else {
+                    // 恢复原来的值
+                    const originalValue = timeInput.getAttribute('data-original-value');
+                    if (originalValue) {
+                        timeInput.value = originalValue;
+                    } else {
+                        timeInput.value = '';
+                    }
+                    timeInput.disabled = false;
+                }
+            });
+            
+            // 语言切换功能
+            setupLanguageSwitch();
+            
+            console.log('页面初始化完成');
+        });
+        
+        // 设置语言切换功能
+        function setupLanguageSwitch() {
+            const languageToggle = document.getElementById('languageToggle');
+            const langBtnText = document.getElementById('langBtnText');
+            const zhElements = document.querySelectorAll('[data-lang="zh"]');
+            const enElements = document.querySelectorAll('[data-lang="en"]');
+            const inputsWithPlaceholder = document.querySelectorAll('[data-placeholder-zh]');
+            
+            let currentLang = 'zh';
+            
+            // 在select元素中设置选中项的显示
+            function updateSelectDisplay(lang) {
+                // 处理所有select元素
+                document.querySelectorAll('select').forEach(select => {
+                    const selectedOption = select.options[select.selectedIndex];
+                    if (selectedOption) {
+                        // 获取当前选中值
+                        const currentValue = selectedOption.value;
+                        
+                        // 隐藏所有选项
+                        Array.from(select.options).forEach(option => {
+                            if (option.getAttribute('data-lang') === lang) {
+                                option.style.display = '';
+                            } else {
+                                option.style.display = 'none';
+                            }
+                        });
+                        
+                        // 如果当前有选中的值，确保对应的选项保持选中状态
+                        if (currentValue) {
+                            // 查找具有相同值的选项
+                            const newOptions = Array.from(select.options).filter(
+                                option => option.value === currentValue && 
+                                option.getAttribute('data-lang') === lang
+                            );
+                            
+                            if (newOptions.length > 0) {
+                                newOptions[0].selected = true;
+                            }
+                        }
+                    }
+                });
+            }
+            
+            languageToggle.addEventListener('click', function() {
+                if (currentLang === 'zh') {
+                    // 切换到英文
+                    zhElements.forEach(el => el.style.display = 'none');
+                    enElements.forEach(el => el.style.display = 'inline');
+                    langBtnText.textContent = '中文';
+                    currentLang = 'en';
+                    
+                    // 更新输入框占位符
+                    inputsWithPlaceholder.forEach(input => {
+                        input.placeholder = input.getAttribute('data-placeholder-en');
+                    });
+                    
+                    // 更新下拉菜单显示
+                    updateSelectDisplay('en');
+                } else {
+                    // 切换到中文
+                    zhElements.forEach(el => el.style.display = 'inline');
+                    enElements.forEach(el => el.style.display = 'none');
+                    langBtnText.textContent = 'English';
+                    currentLang = 'zh';
+                    
+                    // 更新输入框占位符
+                    inputsWithPlaceholder.forEach(input => {
+                        input.placeholder = input.getAttribute('data-placeholder-zh');
+                    });
+                    
+                    // 更新下拉菜单显示
+                    updateSelectDisplay('zh');
+                }
+            });
+        }
+        
+        // 检查lunar库是否加载成功
+        function checkLunarLibrary() {
+            setTimeout(function() {
+                const lunarLoaded = typeof Lunar !== 'undefined' && typeof Solar !== 'undefined';
+                console.log('Lunar库加载状态:', lunarLoaded ? '成功' : '失败');
+                
+                if (!lunarLoaded) {
+                    document.getElementById('lunar-warning').style.display = 'flex';
+                    // 尝试动态加载
+                    tryLoadLunarDynamically();
+                }
+            }, 500);
+        }
+        
+        // 尝试动态加载lunar.js库
+        function tryLoadLunarDynamically() {
+            console.log('尝试动态加载lunar.js库...');
+            
+            // 尝试多个可能的路径
+            const possiblePaths = [
+                '../lunar-javascript/lunar.js',
+                './lunar-javascript/lunar.js',
+                '/lunar-javascript/lunar.js',
+                'lunar-javascript/lunar.js'
+            ];
+            
+            let loaded = false;
+            
+            // 尝试逐个加载
+            for (const path of possiblePaths) {
+                if (loaded) break;
+                
+                const script = document.createElement('script');
+                script.src = path;
+                script.async = false;
+                
+                script.onload = function() {
+                    if (typeof Lunar !== 'undefined' && typeof Solar !== 'undefined') {
+                        console.log(`Lunar库从 ${path} 加载成功`);
+                        document.getElementById('lunar-warning').style.display = 'none';
+                        loaded = true;
+                    }
+                };
+                
+                script.onerror = function() {
+                    console.error(`Lunar库从 ${path} 加载失败`);
+                };
+                
+                document.head.appendChild(script);
+            }
+        }
+        
+        // 处理lunar库加载错误
+        function handleLunarLoadError() {
+            console.error('Lunar.js库加载失败');
+            document.getElementById('lunar-warning').style.display = 'flex';
+            
+            // 尝试动态加载
+            tryLoadLunarDynamically();
+        }
+        
+        // 恢复表单数据
+        function restoreFormData() {
+            try {
+                const savedData = localStorage.getItem('baziUserData');
+                if (savedData) {
+                    const userData = JSON.parse(savedData);
+                    document.getElementById('name').value = userData.name || '';
+                    document.getElementById('gender').value = userData.gender || '';
+                    document.getElementById('birth-date').value = userData.birthDate || '';
+                    document.getElementById('birth-time').value = userData.birthTime || '';
+                    
+                    // 恢复是否不清楚具体时间的选择
+                    const unknownTimeCheckbox = document.getElementById('unknown-time');
+                    if (userData.unknownTime) {
+                        unknownTimeCheckbox.checked = true;
+                        // 触发change事件以更新时间输入框的状态
+                        const event = new Event('change');
+                        unknownTimeCheckbox.dispatchEvent(event);
+                    }
+                }
+            } catch (error) {
+                console.error('恢复表单数据失败:', error);
+            }
+        }
+        
+        // 处理表单提交
+        function handleFormSubmit() {
+            // 显示加载中
+            document.getElementById('loading-overlay').style.display = 'flex';
+            
+            // 获取表单数据
+            const name = document.getElementById('name').value.trim();
+            const gender = document.getElementById('gender').value;
+            const birthDate = document.getElementById('birth-date').value;
+            const birthTime = document.getElementById('birth-time').value;
+            const unknownTime = document.getElementById('unknown-time').checked;
+            
+            // 获取国家和省份数据
+            let country = '';
+            let province = '';
+
+            // 获取国家值
+            const birthCountry = document.getElementById('birth-country');
+            if (birthCountry && birthCountry.value) {
+                country = birthCountry.value;
+            }
+
+            // 获取省份/州值
+                const birthProvince = document.getElementById('birth-province');
+                if (birthProvince && birthProvince.value) {
+                    province = birthProvince.value;
+            }
+            
+            // 禁用提交按钮
+            const submitBtn = document.getElementById('submit-btn');
+            submitBtn.disabled = true;
+            
+            // 验证表单数据
+            if (!name || !gender || !birthDate || !birthTime) {
+                showError('请填写所有必填项');
+                hideLoading();
+                submitBtn.disabled = false;
+                return;
+            }
+            
+            // 创建用户数据对象
+            const userData = {
+                name: name,
+                gender: gender,
+                birthDate: birthDate,
+                birthTime: birthTime,
+                unknownTime: unknownTime,
+                country: country,
+                province: province
+            };
+            
+            // 保存用户数据到localStorage
+            localStorage.setItem('baziUserData', JSON.stringify(userData));
+            
+            try {
+                // 检查lunar库是否加载成功
+                const lunarLoaded = typeof Lunar !== 'undefined' && typeof Solar !== 'undefined';
+                console.log('Lunar库状态检查:', lunarLoaded ? '可用' : '不可用');
+                
+                // 创建分析数据
+                let analysisData;
+                
+                // 如果lunar库加载成功，使用lunar库计算
+                if (lunarLoaded) {
+                    try {
+                        analysisData = calculateBaziWithLunar(userData);
+                        console.log('使用Lunar库计算成功:', analysisData);
+                    } catch (lunarError) {
+                        console.error('使用Lunar库计算失败:', lunarError);
+                        // 如果使用lunar库计算失败，回退到简化算法
+                        showError('精确计算失败，将使用简化算法计算。错误: ' + lunarError.message);
+                        analysisData = calculateBaziSimple(userData);
+                    }
+                } else {
+                    // 否则使用简化算法
+                    console.warn('Lunar库不可用，使用简化算法');
+                    analysisData = calculateBaziSimple(userData);
+                }
+                
+                // 验证计算结果
+                if (!analysisData || !analysisData.ganzhi || !analysisData.wuxing) {
+                    throw new Error('计算结果不完整');
+                }
+                
+                // 延迟一下再跳转，让用户感知到计算过程
+                setTimeout(() => {
+                    // 生成唯一ID
+                    const analysisId = new Date().getTime().toString();
+                    
+                    // 使用带ID的键存储数据
+                    const analysisKey = `bazi_analysis_${analysisId}`;
+                    const userDataKey = `user_data_${analysisId}`;
+                    
+                    // 保存到有ID的存储位置
+                    localStorage.setItem(analysisKey, JSON.stringify(analysisData));
+                    localStorage.setItem(userDataKey, JSON.stringify(userData));
+                    
+                    // 保存分析数据到localStorage (兼容旧代码)
+                    localStorage.setItem('baziAnalysisData', JSON.stringify(analysisData));
+                    
+                    // 跳转到结果页面，添加ID参数
+                    window.location.href = '八字分析结果.html?id=' + analysisId;
+                }, 1000);
+                
+            } catch (error) {
+                console.error('计算八字出错:', error);
+                showError('计算八字出错: ' + error.message + '。请检查出生日期和时间是否正确。');
+                hideLoading();
+                submitBtn.disabled = false;
+            }
+        }
+        
+        // 显示错误信息
+        function showError(message) {
+            const errorDiv = document.getElementById('error-message');
+            errorDiv.innerHTML = '<i class="fas fa-exclamation-circle"></i> ' + message;
+            errorDiv.style.display = 'block';
+            
+            // 5秒后自动隐藏错误信息
+            setTimeout(() => {
+                errorDiv.style.display = 'none';
+            }, 5000);
+        }
+        
+        // 隐藏加载遮罩
+        function hideLoading() {
+            document.getElementById('loading-overlay').style.display = 'none';
+        }
+        
+        // 使用lunar.js库计算八字
+        function calculateBaziWithLunar(userData) {
+            console.log('使用Lunar库计算八字...');
+            
+            // 解析日期时间
+            const [year, month, day] = userData.birthDate.split('-').map(Number);
+            const [hour, minute] = userData.birthTime.split(':').map(Number);
+            
+            console.log('输入数据:', {year, month, day, hour, minute});
+            
+            try {
+                // 创建阳历对象 - 使用正确的方法调用
+                // Lunar库中的年月日是从1开始的，不需要月份+1
+                const date = new Date(year, month-1, day, hour, minute, 0);
+                console.log('创建日期对象:', date.toString());
+                
+                const solar = Solar.fromDate(date);
+                console.log('阳历对象创建成功:', solar);
+                
+                // 转换为农历
+                const lunar = solar.getLunar();
+                console.log('农历数据:', lunar.toString());
+                
+                // 获取八字
+                const eightChar = lunar.getEightChar();
+                console.log('八字数据获取成功');
+                
+                // 五行计算
+                const wuxing = calculateWuxing(eightChar);
+                
+                return {
+                    solarDate: solar.toYmd() + ' ' + solar.toHms(),
+                    lunarDate: lunar.toString(),
+                    shengxiao: lunar.getAnimal(),
+                    ganzhi: {
+                        year: eightChar.getYear(),
+                        month: eightChar.getMonth(),
+                        day: eightChar.getDay(),
+                        hour: eightChar.getTime()
+                    },
+                    wuxing: wuxing,
+                    dayMaster: {
+                        gan: eightChar.getDay().charAt(0)
+                    }
+                };
+            } catch (e) {
+                console.error('lunar库计算出错:', e);
+                throw new Error('lunar库计算失败: ' + e.message);
+            }
+        }
+        
+        // 计算五行分布
+        function calculateWuxing(eightChar) {
+            const tiangan = {
+                '甲': '木', '乙': '木',
+                '丙': '火', '丁': '火',
+                '戊': '土', '己': '土',
+                '庚': '金', '辛': '金',
+                '壬': '水', '癸': '水'
+            };
+            
+            const dizhi = {
+                '子': '水', '丑': '土',
+                '寅': '木', '卯': '木',
+                '辰': '土', '巳': '火',
+                '午': '火', '未': '土',
+                '申': '金', '酉': '金',
+                '戌': '土', '亥': '水'
+            };
+            
+            // 计算权重: 年1, 月2, 日3, 时2
+            const weights = {
+                year: 1,
+                month: 2,
+                day: 3,
+                hour: 2
+            };
+            
+            const wuxingCount = {
+                '木': 0, '火': 0, '土': 0, '金': 0, '水': 0
+            };
+            
+            // 年柱
+            const yearGan = eightChar.getYear().charAt(0);
+            const yearZhi = eightChar.getYear().charAt(1);
+            wuxingCount[tiangan[yearGan]] += weights.year;
+            wuxingCount[dizhi[yearZhi]] += weights.year;
+            
+            // 月柱
+            const monthGan = eightChar.getMonth().charAt(0);
+            const monthZhi = eightChar.getMonth().charAt(1);
+            wuxingCount[tiangan[monthGan]] += weights.month;
+            wuxingCount[dizhi[monthZhi]] += weights.month;
+            
+            // 日柱
+            const dayGan = eightChar.getDay().charAt(0);
+            const dayZhi = eightChar.getDay().charAt(1);
+            wuxingCount[tiangan[dayGan]] += weights.day;
+            wuxingCount[dizhi[dayZhi]] += weights.day;
+            
+            // 时柱
+            const hourGan = eightChar.getTime().charAt(0);
+            const hourZhi = eightChar.getTime().charAt(1);
+            wuxingCount[tiangan[hourGan]] += weights.hour;
+            wuxingCount[dizhi[hourZhi]] += weights.hour;
+            
+            // 计算总权重和百分比
+            const totalWeight = Object.values(wuxingCount).reduce((sum, weight) => sum + weight, 0);
+            
+            const wuxingPercentage = {};
+            for (const element in wuxingCount) {
+                wuxingPercentage[element] = Math.round(wuxingCount[element] / totalWeight * 100);
+            }
+            
+            return wuxingPercentage;
+        }
+        
+        // 使用简化算法计算八字（无lunar库时的备用方案）
+        function calculateBaziSimple(userData) {
+            console.log('使用简化算法计算八字（lunar库不可用）...');
+            
+            const birthDateObj = new Date(userData.birthDate + 'T' + userData.birthTime);
+            
+            // 年月日时
+            const year = birthDateObj.getFullYear();
+            const month = birthDateObj.getMonth() + 1;
+            const day = birthDateObj.getDate();
+            const hour = birthDateObj.getHours();
+            
+            // 获取干支数据
+            const ganzhi = {
+                year: getGanZhi('year', year),
+                month: getGanZhi('month', month),
+                day: getGanZhi('day', day),
+                hour: getGanZhi('hour', hour)
+            };
+            
+            // 计算五行分布
+            const wuxing = calculateSimpleWuxing(ganzhi);
+            
+            return {
+                solarDate: `${year}年${month}月${day}日 ${userData.birthTime}`,
+                lunarDate: getSimpleLunarDate(year, month, day),
+                shengxiao: getShengxiao(year),
+                ganzhi: ganzhi,
+                wuxing: wuxing,
+                dayMaster: {
+                    gan: ganzhi.day[0]
+                }
+            };
+        }
+        
+        // 简化版五行计算
+        function calculateSimpleWuxing(ganzhi) {
+            const tiangan = {
+                '甲': '木', '乙': '木',
+                '丙': '火', '丁': '火',
+                '戊': '土', '己': '土',
+                '庚': '金', '辛': '金',
+                '壬': '水', '癸': '水'
+            };
+            
+            const dizhi = {
+                '子': '水', '丑': '土',
+                '寅': '木', '卯': '木',
+                '辰': '土', '巳': '火',
+                '午': '火', '未': '土',
+                '申': '金', '酉': '金',
+                '戌': '土', '亥': '水'
+            };
+            
+            // 简化的权重
+            const wuxingCount = {
+                '木': 0, '火': 0, '土': 0, '金': 0, '水': 0
+            };
+            
+            // 年柱
+            wuxingCount[tiangan[ganzhi.year[0]]] += 1;
+            wuxingCount[dizhi[ganzhi.year[1]]] += 1;
+            
+            // 月柱
+            wuxingCount[tiangan[ganzhi.month[0]]] += 2;
+            wuxingCount[dizhi[ganzhi.month[1]]] += 2;
+            
+            // 日柱
+            wuxingCount[tiangan[ganzhi.day[0]]] += 3;
+            wuxingCount[dizhi[ganzhi.day[1]]] += 3;
+            
+            // 时柱
+            wuxingCount[tiangan[ganzhi.hour[0]]] += 2;
+            wuxingCount[dizhi[ganzhi.hour[1]]] += 2;
+            
+            // 计算百分比
+            const totalWeight = Object.values(wuxingCount).reduce((sum, weight) => sum + weight, 0);
+            
+            const wuxingPercentage = {};
+            for (const element in wuxingCount) {
+                wuxingPercentage[element] = Math.round(wuxingCount[element] / totalWeight * 100);
+            }
+            
+            return wuxingPercentage;
+        }
+        
+        // 模拟获取干支
+        function getGanZhi(type, value) {
+            const tiangan = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'];
+            const dizhi = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
+            
+            let ganIndex, zhiIndex;
+            
+            if (type === 'year') {
+                ganIndex = (value - 4) % 10;
+                zhiIndex = (value - 4) % 12;
+            } else if (type === 'month') {
+                ganIndex = (value + 2) % 10;
+                zhiIndex = (value + 2) % 12;
+            } else if (type === 'day') {
+                ganIndex = (value * 2 + 4) % 10;
+                zhiIndex = (value - 1) % 12;
+            } else if (type === 'hour') {
+                ganIndex = (Math.floor(value / 2) + 4) % 10;
+                zhiIndex = (Math.floor(value / 2)) % 12;
+            }
+            
+            // 确保索引为正数
+            ganIndex = ganIndex < 0 ? ganIndex + 10 : ganIndex;
+            zhiIndex = zhiIndex < 0 ? zhiIndex + 12 : zhiIndex;
+            
+            return tiangan[ganIndex] + dizhi[zhiIndex];
+        }
+        
+        // 模拟获取简化版农历日期
+        function getSimpleLunarDate(year, month, day) {
+            const monthNames = ['正', '二', '三', '四', '五', '六', '七', '八', '九', '十', '冬', '腊'];
+            const dayNames = ['初一', '初二', '初三', '初四', '初五', '初六', '初七', '初八', '初九', '初十',
+                            '十一', '十二', '十三', '十四', '十五', '十六', '十七', '十八', '十九', '二十',
+                            '廿一', '廿二', '廿三', '廿四', '廿五', '廿六', '廿七', '廿八', '廿九', '三十'];
+            
+            // 简化算法，仅作演示
+            const lunarMonth = (month + 5) % 12;
+            const lunarDay = (day - 1) % 30;
+            
+            return `${monthNames[lunarMonth]}月${dayNames[lunarDay]}`;
+        }
+        
+        // 获取生肖
+        function getShengxiao(year) {
+            const shengxiao = ['鼠', '牛', '虎', '兔', '龙', '蛇', '马', '羊', '猴', '鸡', '狗', '猪'];
+            return shengxiao[(year - 4) % 12];
+        }
+    </script>
+</body>
+</html>

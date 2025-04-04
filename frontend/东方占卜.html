@@ -1,0 +1,856 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eastern Divination</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #d4af37;
+            --second-color: #6b5b45;
+            --bg-color: #1a1a1a;
+        }
+
+        body {
+            background: var(--bg-color);
+            color: var(--primary-color);
+            font-family: 'STKaiti', serif;
+            min-height: 100vh;
+            margin: 0;
+            overflow-x: hidden;
+        }
+
+        /* 八卦背景 */
+        .bagua-bg {
+            position: fixed;
+            width: 150vmax;
+            height: 150vmax;
+            background: radial-gradient(circle, 
+                rgba(42, 36, 28, 0.8) 0%,
+                rgba(26, 26, 26, 0.9) 70%);
+            mask-image: url('data:image/svg+xml;utf8,<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><path d="M50 15a35 35 0 1 0 0 70 35 35 0 0 0 0-70zm0 5a30 30 0 0 1 0 60 30 30 0 0 1 0-60z" fill="white"/></svg>');
+            opacity: 0.1;
+            pointer-events: none;
+        }
+
+        /* 主容器 */
+        .container {
+            position: relative;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+            z-index: 1;
+        }
+
+        /* 入口选择界面 */
+        .method-select {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2rem;
+            margin-top: 5rem;
+        }
+
+        /* 占卜方式卡片 */
+        .method-card {
+            position: relative;
+            border: 2px solid var(--second-color);
+            border-radius: 10px;
+            padding: 2rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: linear-gradient(45deg, 
+                rgba(42, 36, 28, 0.5) 0%,
+                rgba(26, 26, 26, 0.8) 100%);
+            min-height: 300px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .method-card:hover {
+            border-color: var(--primary-color);
+            transform: translateY(-5px);
+            box-shadow: 0 0 30px rgba(212, 175, 55, 0.2);
+        }
+
+        /* 方法卡片图标 */
+        .method-icon {
+            width: 120px;
+            height: 120px;
+            margin: 1rem 0;
+            border-radius: 15px;
+            padding: 15px;
+            border: 2px solid var(--second-color);
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* 骰子图标 */
+        .dice-icon {
+            background: url('./assets/dice.jpg') center/cover;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+
+        /* 铜钱图标 */
+        .coin-icon {
+            background: url('./assets/coin.jpg') center/cover;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+
+        /* 数字卦象 */
+        .number-icon {
+            background: #2c1608;
+            font-family: 'Arial', sans-serif;
+            color: var(--primary-color);
+            font-size: 3.5em;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .number-icon .number {
+            font-weight: bold;
+        }
+
+        /* 图片加载失败时的备用样式 */
+        .dice-icon.fallback {
+            background: #2c1608;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .coin-icon.fallback {
+            background: #b87333;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .fallback i {
+            font-size: 3em;
+            color: var(--primary-color);
+        }
+
+        /* 占卜界面 */
+        .divination-interface {
+            display: none;
+            position: relative;
+            text-align: center;
+            padding-top: 4rem;
+        }
+
+        /* 返回按钮 */
+        .back-btn {
+            position: absolute;
+            top: 1rem;
+            left: 1rem;
+            background: none;
+            border: 1px solid var(--second-color);
+            color: var(--primary-color);
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .back-btn:hover {
+            border-color: var(--primary-color);
+        }
+
+        /* 动画效果 */
+        @keyframes dice-bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        @keyframes coin-flip {
+            0% { transform: rotateY(0deg); }
+            100% { transform: rotateY(360deg); }
+        }
+
+        @keyframes bagua-spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* 悬停特效 */
+        [data-method="dice"]:hover .dice-icon {
+            animation: dice-bounce 1s ease-in-out infinite;
+        }
+
+        [data-method="coin"]:hover .coin-icon {
+            animation: coin-flip 1.5s ease-in-out infinite;
+        }
+
+        [data-method="number"]:hover .number-icon {
+            animation: bagua-spin 4s linear infinite;
+        }
+
+        /* 图片滤镜效果 */
+        .method-icon.dice-icon,
+        .method-icon.coin-icon {
+            filter: brightness(1.1) contrast(1.1) sepia(0.2);
+        }
+
+        .method-card:hover .method-icon {
+            filter: brightness(1.2) contrast(1.2) sepia(0.3);
+            border-color: var(--primary-color);
+        }
+
+        /* 问题输入界面样式 */
+        .question-panel {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 70%;
+            max-width: 500px;
+            text-align: center;
+            background: rgba(26, 26, 26, 0.95);
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 0 30px rgba(212, 175, 55, 0.2);
+            z-index: 100;
+        }
+
+        #questionInput {
+            width: calc(100% - 3rem);
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            background: rgba(26, 26, 26, 0.8);
+            border: 2px solid var(--primary-color);
+            color: var(--primary-color);
+            border-radius: 10px;
+            font-size: 1.1em;
+            resize: none;
+            min-height: 100px;
+        }
+
+        .start-btn {
+            background: linear-gradient(45deg, #d4af37, #b8860b);
+            color: #1a1a1a;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 25px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 1rem 0;
+            box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3);
+        }
+
+        .start-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(212, 175, 55, 0.4);
+        }
+
+        .start-btn:active {
+            transform: translateY(1px);
+        }
+
+        .start-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        /* 结果样式 */
+        .dice-results,
+        .coin-results,
+        .number-results {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            width: 100%;
+            max-width: 400px;
+            margin: 2rem auto;
+        }
+
+        .dice-result,
+        .coin-result,
+        .number-result {
+            background: rgba(212, 175, 55, 0.1);
+            border: 1px solid var(--primary-color);
+            padding: 1rem;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .hexagram-complete {
+            text-align: center;
+            margin: 1rem 0;
+        }
+
+        .hexagram {
+            font-size: 2em;
+            margin: 1rem 0;
+        }
+
+        /* 加载动画样式 */
+        .loading-spinner {
+            animation: spin 1s linear infinite;
+            margin-right: 8px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .hexagram-analysis {
+            margin-top: 1rem;
+            padding: 1rem;
+            border: 1px solid var(--primary-color);
+            border-radius: 8px;
+            background: rgba(212, 175, 55, 0.05);
+        }
+
+        .hexagram-analysis h4 {
+            color: var(--primary-color);
+            margin: 1rem 0 0.5rem 0;
+            font-size: 1.2em;
+        }
+
+        .hexagram-analysis p {
+            margin: 0.5rem 0;
+            line-height: 1.6;
+        }
+
+        /* 卦象动画样式 */
+        .hexagram-animation {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            margin: 2rem 0;
+        }
+
+        .yao {
+            height: 8px;
+            border-radius: 4px;
+            opacity: 0;
+            animation: yao-appear 0.5s forwards;
+        }
+
+        .yin { 
+            background: linear-gradient(90deg, #6b5b45, #2c1608); 
+        }
+
+        .yang { 
+            background: linear-gradient(90deg, #d4af37, #b8860b); 
+        }
+
+        @keyframes yao-appear {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        /* 运势显示样式 */
+        .fortune-meter {
+            margin: 1rem 0;
+            padding: 1rem;
+            background: rgba(212, 175, 55, 0.1);
+            border-radius: 8px;
+        }
+
+        .meter-bar {
+            height: 8px;
+            background: linear-gradient(90deg, #d4af37, #b8860b);
+            border-radius: 4px;
+            margin-bottom: 0.5rem;
+            transition: width 1s ease-in-out;
+        }
+
+        .stars {
+            color: #d4af37;
+            font-size: 1.2em;
+            text-align: center;
+        }
+
+        /* 解读按钮样式 */
+        .interpret-btn {
+            background: linear-gradient(45deg, #d4af37, #b8860b);
+            color: #1a1a1a;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 20px 0;
+            box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .interpret-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(212, 175, 55, 0.4);
+        }
+
+        .interpret-btn:active {
+            transform: translateY(1px);
+            box-shadow: 0 2px 10px rgba(212, 175, 55, 0.3);
+        }
+
+        .interpret-btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .interpret-btn .loading-spinner {
+            margin-right: 8px;
+            color: #1a1a1a;
+        }
+
+        /* 按钮光效 */
+        .interpret-btn::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(
+                45deg,
+                transparent,
+                rgba(255, 255, 255, 0.1),
+                transparent
+            );
+            transform: rotate(45deg);
+            transition: all 0.3s ease;
+        }
+
+        .interpret-btn:hover::before {
+            animation: shine 1.5s infinite;
+        }
+
+        @keyframes shine {
+            0% {
+                transform: translateX(-100%) rotate(45deg);
+            }
+            100% {
+                transform: translateX(100%) rotate(45deg);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="bagua-bg"></div>
+    <div id="overlay" class="overlay" style="display: none;"></div>
+    
+    <div class="container">
+        <!-- 添加提示文字 -->
+        <div class="divination-notice" style="
+            text-align: center;
+            margin-bottom: 2rem;
+            padding: 1rem;
+            background: rgba(212, 175, 55, 0.1);
+            border: 1px solid var(--primary-color);
+            border-radius: 8px;
+            max-width: 800px;
+            margin: 2rem auto;
+        ">
+            <p style="
+                font-size: 1.2em;
+                line-height: 1.6;
+                color: var(--primary-color);
+                margin: 0;
+            ">
+                <i class="fas fa-exclamation-circle"></i>
+                Important: Before writing your question, focus your mind on what you wish to ask.
+                The first reading will be the most accurate - multiple readings of the same question
+                will diminish the accuracy of the divination.
+            </p>
+        </div>
+
+        <!-- Main Selection Interface -->
+        <div class="method-select" id="methodSelect">
+            <div class="method-card" data-method="dice">
+                <div class="method-icon dice-icon"></div>
+                <h2>Dice Divination</h2>
+                <p>Predict the future through sacred dice</p>
+            </div>
+            
+            <div class="method-card" data-method="coin">
+                <div class="method-icon coin-icon"></div>
+                <h2>Coin Oracle</h2>
+                <p>Balance prediction through Yin-Yang coins</p>
+            </div>
+            
+            <div class="method-card" data-method="number">
+                <div class="method-icon number-icon">
+                    <span class="number">9</span>
+                </div>
+                <h2>Numerology</h2>
+                <p>Mystical numbers reveal destiny</p>
+            </div>
+        </div>
+
+        <!-- Unified Divination Interface -->
+        <div class="divination-interface" id="divInterface">
+            <button class="back-btn">← Back</button>
+            <h2 id="methodTitle"></h2>
+            <div class="question-panel">
+                <textarea id="questionInput" placeholder="Enter your divination question..."></textarea>
+                <button class="start-btn" onclick="startForecasting()" disabled>Start Divination</button>
+            </div>
+            <div class="action-panel">
+                <div id="processResults"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 全局变量
+        let userQuestion = '';
+        let currentMethod = '';
+        let currentHexagram = [];
+        let currentStep = 0;
+
+        // 六爻梅花核心逻辑
+        const HEXAGRAM_RULES = {
+            dice: {
+                steps: 6,
+                generate: () => Math.ceil(Math.random() * 6),
+                interpret: (num) => num % 2 === 0 ? 'Yin' : 'Yang'
+            },
+            coin: {
+                steps: 6,
+                generate: () => (Math.random() > 0.5 ? 3 : 2),
+                interpret: (num) => num === 3 ? 'Yang' : 'Yin'
+            },
+            number: {
+                steps: 6,
+                generate: () => Math.floor(Math.random() * 999999),
+                interpret: (num) => {
+                    const binary = num.toString(2).padStart(6, '0');
+                    return binary.split('').map(bit => bit === '1' ? 'Yang' : 'Yin').reverse();
+                }
+            }
+        };
+
+        // 等待DOM加载完成
+        document.addEventListener('DOMContentLoaded', function() {
+            // 方法卡片点击事件
+            document.querySelectorAll('.method-card').forEach(card => {
+                card.addEventListener('click', (e) => {
+                    currentMethod = e.currentTarget.dataset.method;
+                    const methodSelect = document.getElementById('methodSelect');
+                    const divInterface = document.getElementById('divInterface');
+                    const overlay = document.getElementById('overlay');
+                    const methodTitle = document.getElementById('methodTitle');
+                    
+                    if (methodSelect && divInterface && overlay && methodTitle) {
+                        methodSelect.style.display = 'none';
+                        divInterface.style.display = 'block';
+                        document.querySelector('.question-panel').style.display = 'block';
+                        overlay.style.display = 'block';
+                        methodTitle.textContent = 
+                            document.querySelector(`[data-method="${currentMethod}"] h2`).textContent;
+                    }
+                });
+            });
+
+            // 问题输入验证
+            const questionInput = document.getElementById('questionInput');
+            const startBtn = document.querySelector('.start-btn');
+            if (questionInput && startBtn) {
+                questionInput.addEventListener('input', function() {
+                    startBtn.disabled = !this.value.trim();
+                });
+            }
+
+            // 返回按钮逻辑
+            const backBtn = document.querySelector('.back-btn');
+            if (backBtn) {
+                backBtn.addEventListener('click', () => {
+                    const divInterface = document.getElementById('divInterface');
+                    const methodSelect = document.getElementById('methodSelect');
+                    const questionInput = document.getElementById('questionInput');
+                    const processResults = document.getElementById('processResults');
+                    const overlay = document.getElementById('overlay');
+                    
+                    if (divInterface && methodSelect && questionInput && processResults && overlay) {
+                        divInterface.style.display = 'none';
+                        methodSelect.style.display = 'grid';
+                        questionInput.value = '';
+                        processResults.innerHTML = '';
+                        overlay.style.display = 'none';
+                        userQuestion = '';
+                        currentMethod = '';
+                        currentHexagram = [];
+                        currentStep = 0;
+                    }
+                });
+            }
+
+            // 添加图片加载错误处理
+            const diceIcon = document.querySelector('.dice-icon');
+            const coinIcon = document.querySelector('.coin-icon');
+
+            if (diceIcon) {
+                const diceImg = new Image();
+                diceImg.onerror = function() {
+                    diceIcon.classList.add('fallback');
+                    diceIcon.innerHTML = '<i class="fas fa-dice"></i>';
+                };
+                diceImg.src = './assets/dice.jpg';
+            }
+
+            if (coinIcon) {
+                const coinImg = new Image();
+                coinImg.onerror = function() {
+                    coinIcon.classList.add('fallback');
+                    coinIcon.innerHTML = '<i class="fas fa-coins"></i>';
+                };
+                coinImg.src = './assets/coin.jpg';
+            }
+        });
+
+        // 开始占卜流程
+        function startForecasting() {
+            const questionInput = document.getElementById('questionInput');
+            const questionPanel = document.querySelector('.question-panel');
+            const overlay = document.getElementById('overlay');
+            
+            if (questionInput && questionPanel && overlay) {
+                userQuestion = questionInput.value.trim();
+                if (!userQuestion) return;
+
+                questionPanel.style.display = 'none';
+                overlay.style.display = 'none';
+                initHexagramProcess(currentMethod);
+            }
+        }
+
+        // 初始化占卜流程
+        function initHexagramProcess(method) {
+            currentHexagram = [];
+            currentStep = 0;
+            
+            const processDiv = document.getElementById('processResults');
+            if (processDiv) {
+                processDiv.innerHTML = '';
+
+                // 执行占卜方法
+                if(method === 'dice') castDice(6);
+                if(method === 'coin') castCoins(6);
+                if(method === 'number') generateNumbers();
+            }
+        }
+
+        function castDice(times) {
+            if (currentStep >= 6) return;
+            
+            const results = [];
+            for (let i = 0; i < times; i++) {
+                const result = HEXAGRAM_RULES.dice.generate();
+                results.push(result);
+                currentHexagram.push(result % 2);
+            }
+            
+            displayResults(results, 'dice');
+            currentStep += times;
+            
+            if (currentStep >= 6) {
+                completeHexagram();
+            }
+        }
+
+        function castCoins(times) {
+            if (currentStep >= 6) return;
+            
+            const results = [];
+            for (let i = 0; i < times; i++) {
+                const result = HEXAGRAM_RULES.coin.generate();
+                results.push(result);
+                currentHexagram.push(result === 3 ? 1 : 0);
+            }
+            
+            displayResults(results, 'coin');
+            currentStep += times;
+            
+            if (currentStep >= 6) {
+                completeHexagram();
+            }
+        }
+
+        function generateNumbers() {
+            if (currentStep >= 6) return;
+            
+            const number = HEXAGRAM_RULES.number.generate();
+            const lines = HEXAGRAM_RULES.number.interpret(number);
+            currentHexagram = lines.map(line => line === 'Yang' ? 1 : 0);
+            
+            displayResults([number], 'number');
+            currentStep = 6;
+            completeHexagram();
+        }
+
+        // 修改结果显示逻辑
+        function displayResults(results, type) {
+            const processDiv = document.getElementById('processResults');
+            processDiv.innerHTML += results.map((r, i) => `
+                <div class="${type}-result">
+                    <div>Line ${currentStep + i + 1}</div>
+                    <div>Result: ${r}</div>
+                    <div>${HEXAGRAM_RULES[type].interpret(r)}</div>
+                </div>
+            `).join('');
+        }
+
+        function completeHexagram() {
+            const hexagram = currentHexagram.slice(0, 6).reverse();
+            const hexagramSymbol = hexagram.map(y => y ? '⚊' : '⚋').join('');
+            
+            const processDiv = document.getElementById('processResults');
+            processDiv.innerHTML += `
+                <div class="message bot-message">
+                    <div class="hexagram-complete">
+                        <h3>Hexagram Generated</h3>
+                        <div class="hexagram-animation">
+                            ${hexagram.map((y, i) => `
+                                <div class="yao ${y ? 'yang' : 'yin'}" 
+                                     style="animation-delay: ${i*0.2}s"></div>
+                            `).join('')}
+                        </div>
+                        <div class="hexagram">${hexagramSymbol}</div>
+                        <button class="interpret-btn" id="interpretBtn" onclick="interpretHexagram()">
+                            <i class="fas fa-compass"></i> Interpret Hexagram
+                        </button>
+                    </div>
+                    <div id="interpretationResult"></div>
+                </div>
+            `;
+        }
+
+        async function interpretHexagram() {
+            const btn = document.getElementById('interpretBtn');
+            const userQuestion = document.getElementById('questionInput').value.trim();
+            
+            if (!userQuestion) {
+                alert('Please enter your question');
+                return;
+            }
+            
+            try {
+                const originalHTML = btn.innerHTML;
+                btn.innerHTML = `<i class="fas fa-spinner loading-spinner"></i> Interpreting...`;
+                btn.disabled = true;
+                
+                const methodNames = {
+                    'dice': 'Dice Oracle',
+                    'coin': 'Coin Oracle',
+                    'number': 'Numerology'
+                };
+
+                // Add timeout control
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 30000);
+
+                const response = await fetch('http://localhost:8000/api/interpret', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        hexagram: currentHexagram.join(','),
+                        question: userQuestion,
+                        method: methodNames[currentMethod]
+                    }),
+                    signal: controller.signal
+                });
+
+                clearTimeout(timeoutId);
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                
+                const resultDiv = document.getElementById('interpretationResult');
+                resultDiv.innerHTML = `
+                    <div class="hexagram-analysis">
+                        <h4>${data.hexagram_name}</h4>
+                        <div class="interpretation-content">
+                            ${data.interpretation}
+                        </div>
+                    </div>
+                `;
+                
+                btn.innerHTML = originalHTML;
+                btn.disabled = false;
+            } catch (error) {
+                console.error('Interpretation failed:', error);
+                let errorMessage = 'Interpretation failed, please try again later';
+                if (error.name === 'AbortError') {
+                    errorMessage = 'Request timeout, please try again';
+                } else if (error.message.includes('incomplete hexagram data')) {
+                    errorMessage = 'Incomplete hexagram data, please divine again';
+                }
+                alert(errorMessage);
+                btn.innerHTML = `<i class="fas fa-compass"></i> Interpret Hexagram`;
+                btn.disabled = false;
+            }
+        }
+
+        function generateHexagram(method) {
+            let hexagram = [];
+            switch(method) {
+                case 'dice':
+                    for(let i = 0; i < 6; i++) {
+                        hexagram.push(Math.floor(Math.random() * 6) + 1);
+                    }
+                    break;
+                case 'coin':
+                    for(let i = 0; i < 6; i++) {
+                        hexagram.push(Math.floor(Math.random() * 2));
+                    }
+                    break;
+                case 'number':
+                    for(let i = 0; i < 6; i++) {
+                        hexagram.push(Math.floor(Math.random() * 9) + 1);
+                    }
+                    break;
+            }
+            return hexagram;
+        }
+
+        function displayHexagram(hexagram, method) {
+            const container = document.getElementById('hexagramDisplay');
+            container.innerHTML = '';
+            
+            const methodNames = {
+                'dice': 'Dice Oracle',
+                'coin': 'Coin Oracle',
+                'number': 'Numerology'
+            };
+            
+            const title = document.createElement('h3');
+            title.textContent = methodNames[method];
+            container.appendChild(title);
+            
+            const lines = document.createElement('div');
+            lines.className = 'hexagram-lines';
+            
+            hexagram.forEach((value, index) => {
+                const line = document.createElement('div');
+                line.className = `hexagram-line ${value % 2 === 0 ? 'yin' : 'yang'}`;
+                line.textContent = `Line ${index + 1}: ${value}`;
+                lines.appendChild(line);
+            });
+            
+            container.appendChild(lines);
+            return hexagram;
+        }
+    </script>
+</body>
+</html>

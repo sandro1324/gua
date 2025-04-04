@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tarot Reading</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-dark: #0a0a25;
+            --primary-medium: #1a1a3a;
+            --accent-gold: #d4af37;
+            --accent-purple: #6a0dad;
+            --text-light: #f8f8ff;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Cinzel', serif;
+            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-medium) 50%, var(--primary-dark) 100%);
+            color: var(--text-light);
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+        
+        /* Header */
+        .header {
+            text-align: center;
+            padding: 20px 0;
+            position: relative;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            background: linear-gradient(to right, #fff, var(--accent-gold), #fff);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 0 0 10px rgba(212, 175, 55, 0.3);
+        }
+        
+        .return-home {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            font-size: 1.5rem;
+            color: var(--text-light);
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        
+        .return-home:hover {
+            color: var(--accent-gold);
+            transform: scale(1.1);
+        }
+        
+        /* Main Container */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        /* Ritual Preparation Section */
+        .ritual-preparation {
+            position: relative;
+            height: 70vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+        
+        .sacred-triangle {
+            position: absolute;
+            width: 80%;
+            height: 80%;
+            max-width: 800px;
+            opacity: 0;
+            transition: opacity 2s ease;
+        }
+        
+        .sacred-triangle.active {
+            opacity: 1;
+        }
+        
+        .element-altar {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .element {
+            position: absolute;
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2rem;
+            cursor: pointer;
+            transition: all 0.5s ease;
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+            opacity: 0;
+            transform: scale(0);
+        }
+        
+        .element.active {
+            opacity: 1;
+            transform: scale(1);
+        }
+        
+        .element:hover {
+            transform: scale(1.2);
+        }
+        
+        .element.fire {
+            background: radial-gradient(circle, #ff6b6b, #732020);
+            top: 20%;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        
+        .element.water {
+            background: radial-gradient(circle, #6bcaff, #1a3c61);
+            bottom: 20%;
+            left: 35%;
+        }
+        
+        .element.air {
+            background: radial-gradient(circle, #f8f9fa, #adb5bd);
+            bottom: 20%;
+            right: 35%;
+        }
+        
+        .element.earth {
+            background: radial-gradient(circle, #a5d6a7, #2e7d32);
+            top: 50%;
+            left: 20%;
+        }
+        
+        .crystal-ball {
+            position: absolute;
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, 
+                                      rgba(255, 255, 255, 0.9), 
+                                      rgba(200, 220, 255, 0.2) 30%,
+                                      rgba(100, 180, 255, 0.3) 70%,
+                                      rgba(50, 120, 200, 0.4));
+            box-shadow: 0 0 30px rgba(100, 180, 255, 0.6),
+                        inset 0 0 30px rgba(255, 255, 255, 0.4);
+            z-index: 5;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .crystal-ball:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 40px rgba(100, 180, 255, 0.8),
+                        inset 0 0 40px rgba(255, 255, 255, 0.6);
+        }
+        
+        .energy-field {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(100, 180, 255, 0.1) 0%, transparent 70%);
+            transform: scale(0);
+            transition: transform 2s ease;
+        }
+        
+        .energy-field.active {
+            transform: scale(3);
+        }
+        
+        /* Spread Selection */
+        .spread-selection {
+            padding: 40px 0;
+            text-align: center;
+            display: none;
+        }
+        
+        .spread-selection.active {
+            display: block;
+        }
+        
+        .spread-title {
+            font-size: 2rem;
+            margin-bottom: 30px;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+        }
+        
+        .spreads-container {
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            gap: 40px;
+        }
+        
+        .spread-option {
+            width: 300px;
+            height: 400px;
+            perspective: 1000px;
+            cursor: pointer;
+        }
+        
+        .spread-inner {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 1s;
+        }
+        
+        .spread-option:hover .spread-inner {
+            transform: rotateY(20deg);
+        }
+        
+        .spread-front {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 15px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(26, 26, 58, 0.8);
+            border: 2px solid var(--accent-gold);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+        
+        .spread-icon {
+            font-size: 3rem;
+            color: var(--accent-gold);
+            margin-bottom: 20px;
+        }
+        
+        .spread-name {
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            color: var(--accent-gold);
+        }
+        
+        .spread-description {
+            font-size: 0.9rem;
+            line-height: 1.5;
+            color: var(--text-light);
+        }
+        
+        .start-button {
+            padding: 10px 25px;
+            background: linear-gradient(to right, #7b4397, #dc2430);
+            color: var(--text-light);
+            border: none;
+            border-radius: 30px;
+            font-family: 'Cinzel', serif;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 20px;
+            box-shadow: 0 5px 15px rgba(123, 67, 151, 0.3);
+        }
+        
+        .start-button:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(123, 67, 151, 0.5);
+        }
+        
+        /* Shuffle Interaction */
+        .shuffle-interaction {
+            height: 100vh;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+        
+        .shuffle-interaction.active {
+            display: flex;
+        }
+        
+        .shuffle-instruction {
+            font-size: 1.8rem;
+            text-align: center;
+            margin-bottom: 50px;
+            color: var(--accent-gold);
+            text-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
+        }
+        
+        .deck-container {
+            width: 200px;
+            height: 300px;
+            position: relative;
+            perspective: 1000px;
+        }
+        
+        .card {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-color: #1a1a3a; /* 备用背景色 */
+            border: 2px solid var(--accent-gold);
+            border-radius: 15px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            transition: all 0.5s ease;
+        }
+        
+        .shuffle-button {
+            padding: 15px 40px;
+            background: linear-gradient(to right, #7b4397, #dc2430);
+            color: var(--text-light);
+            border: none;
+            border-radius: 30px;
+            font-family: 'Cinzel', serif;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 50px;
+            box-shadow: 0 5px 15px rgba(123, 67, 151, 0.3);
+        }
+        
+        .shuffle-button:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(123, 67, 151, 0.5);
+        }
+
+        /* Loading Animation */
+        .loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--primary-dark);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            transition: opacity 1s ease;
+        }
+
+        .loading-spinner {
+            width: 100px;
+            height: 100px;
+            border: 5px solid transparent;
+            border-top: 5px solid var(--accent-gold);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Loading Animation -->
+    <div class="loading" id="loadingScreen">
+        <div class="loading-spinner"></div>
+    </div>
+
+    <!-- Header -->
+    <div class="header">
+        <a href="神秘占卜主页.html" class="return-home">
+            <i class="fas fa-home"></i>
+        </a>
+        <h1>Mystical Tarot Reading</h1>
+    </div>
+
+    <!-- Main Container -->
+    <div class="container">
+        <!-- Ritual Preparation Section -->
+        <div class="ritual-preparation" id="ritualPreparation">
+            <div class="sacred-triangle" id="sacredTriangle"></div>
+            <div class="element-altar">
+                <div class="element fire" id="fireElement">
+                    <i class="fas fa-fire"></i>
+                </div>
+                <div class="element water" id="waterElement">
+                    <i class="fas fa-tint"></i>
+                </div>
+                <div class="element air" id="airElement">
+                    <i class="fas fa-wind"></i>
+                </div>
+                <div class="element earth" id="earthElement">
+                    <i class="fas fa-mountain"></i>
+                </div>
+            </div>
+            <div class="crystal-ball" id="crystalBall"></div>
+            <div class="energy-field" id="energyField"></div>
+        </div>
+
+        <!-- Spread Selection -->
+        <div class="spread-selection" id="spreadSelection">
+            <h2 class="spread-title">Choose Your Spread</h2>
+            <div class="spreads-container">
+                <div class="spread-option" id="threeCardSpread">
+                    <div class="spread-inner">
+                        <div class="spread-front">
+                            <div class="spread-icon">
+                                <i class="fas fa-dharmachakra"></i>
+                            </div>
+                            <div class="spread-content">
+                                <h3 class="spread-name">Three Card Spread</h3>
+                                <p class="spread-description">The classic three-card spread reveals insights about your past, present, and future. Simple yet powerful for quick guidance and clarity.</p>
+                            </div>
+                            <button class="start-button" data-spread="three-card">Begin</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="spread-option" id="celticCrossSpread">
+                    <div class="spread-inner">
+                        <div class="spread-front">
+                            <div class="spread-icon">
+                                <i class="fas fa-cross"></i>
+                            </div>
+                            <div class="spread-content">
+                                <h3 class="spread-name">Celtic Cross</h3>
+                                <p class="spread-description">A comprehensive ten-card spread that explores the influences surrounding your question, obstacles, hopes, and potential outcomes.</p>
+                            </div>
+                            <button class="start-button" data-spread="celtic-cross">Begin</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="spread-option" id="wheelOfYearSpread">
+                    <div class="spread-inner">
+                        <div class="spread-front">
+                            <div class="spread-icon">
+                                <i class="fas fa-circle-notch"></i>
+                            </div>
+                            <div class="spread-content">
+                                <h3 class="spread-name">Wheel of Time</h3>
+                                <p class="spread-description">A circular spread mapping out the energies of the coming year, divided into months or seasons to provide a complete temporal forecast.</p>
+                            </div>
+                            <button class="start-button" data-spread="wheel-of-year">Begin</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Shuffle Interaction -->
+        <div class="shuffle-interaction" id="shuffleInteraction">
+            <h2 class="shuffle-instruction">Focus on your question and shuffle the cards</h2>
+            <div class="deck-container" id="deckContainer">
+                <!-- Cards will be dynamically generated here -->
+            </div>
+            <button class="shuffle-button" id="shuffleButton">Shuffle</button>
+        </div>
+    </div>
+
+    <script>
+        // Wait for document to load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Get elements
+            const loadingScreen = document.getElementById('loadingScreen');
+            const ritualPreparation = document.getElementById('ritualPreparation');
+            const sacredTriangle = document.getElementById('sacredTriangle');
+            const fireElement = document.getElementById('fireElement');
+            const waterElement = document.getElementById('waterElement');
+            const airElement = document.getElementById('airElement');
+            const earthElement = document.getElementById('earthElement');
+            const crystalBall = document.getElementById('crystalBall');
+            const energyField = document.getElementById('energyField');
+            const spreadSelection = document.getElementById('spreadSelection');
+            const shuffleInteraction = document.getElementById('shuffleInteraction');
+            const deckContainer = document.getElementById('deckContainer');
+            const shuffleButton = document.getElementById('shuffleButton');
+            const startButtons = document.querySelectorAll('.start-button');
+            
+            // Hide loading screen after 2 seconds
+            setTimeout(() => {
+                loadingScreen.style.opacity = 0;
+                setTimeout(() => {
+                    loadingScreen.style.display = 'none';
+                }, 1000);
+            }, 2000);
+            
+            // Initialize the ritual preparation
+            setTimeout(() => {
+                // Create the sacred triangle SVG
+                sacredTriangle.innerHTML = `
+                    <svg width="100%" height="100%" viewBox="0 0 100 100">
+                        <polygon points="50,0 100,86.6 0,86.6" fill="none" stroke="rgba(212, 175, 55, 0.6)" stroke-width="0.5" />
+                        <circle cx="50" cy="28.87" r="3" fill="rgba(212, 175, 55, 0.6)" />
+                        <circle cx="75" cy="57.74" r="3" fill="rgba(212, 175, 55, 0.6)" />
+                        <circle cx="25" cy="57.74" r="3" fill="rgba(212, 175, 55, 0.6)" />
+                        <line x1="50" y1="28.87" x2="75" y2="57.74" stroke="rgba(212, 175, 55, 0.6)" stroke-width="0.5" />
+                        <line x1="75" y1="57.74" x2="25" y2="57.74" stroke="rgba(212, 175, 55, 0.6)" stroke-width="0.5" />
+                        <line x1="25" y1="57.74" x2="50" y2="28.87" stroke="rgba(212, 175, 55, 0.6)" stroke-width="0.5" />
+                    </svg>
+                `;
+                sacredTriangle.classList.add('active');
+                
+                // Activate the elements one by one
+                setTimeout(() => {
+                    fireElement.classList.add('active');
+                    playSound('fire');
+                    
+                    setTimeout(() => {
+                        waterElement.classList.add('active');
+                        playSound('water');
+                        
+                        setTimeout(() => {
+                            airElement.classList.add('active');
+                            playSound('air');
+                            
+                            setTimeout(() => {
+                                earthElement.classList.add('active');
+                                playSound('earth');
+                            }, 800);
+                        }, 800);
+                    }, 800);
+                }, 1000);
+            }, 2500);
+            
+            // Crystal ball click event
+            crystalBall.addEventListener('click', function() {
+                energyField.classList.add('active');
+                playSound('crystal');
+                
+                // Transition to spread selection after energy field animation
+                setTimeout(() => {
+                    ritualPreparation.style.display = 'none';
+                    spreadSelection.classList.add('active');
+                }, 2000);
+            });
+            
+            // Start button click events
+            startButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const spreadType = this.getAttribute('data-spread');
+                    spreadSelection.classList.remove('active');
+                    shuffleInteraction.classList.add('active');
+                    createDeck();
+                    
+                    // 存储选择的牌阵类型，供跳转使用
+                    sessionStorage.setItem('selectedSpreadType', spreadType);
+                });
+            });
+            
+            // Create deck of cards
+            function createDeck() {
+                // Clear previous deck
+                deckContainer.innerHTML = '';
+                
+                // Create 78 cards (standard tarot deck)
+                for (let i = 0; i < 78; i++) {
+                    const card = document.createElement('div');
+                    card.classList.add('card');
+                    card.style.transform = `translateZ(${-i * 0.5}px)`;
+                    // 修正卡牌背景图路径
+                    card.style.backgroundImage = "url('assets/tarot/card-back.png')";
+                    deckContainer.appendChild(card);
+                }
+            }
+            
+            // Shuffle button click event
+            shuffleButton.addEventListener('click', function() {
+                playSound('shuffle');
+                animateShuffle();
+            });
+            
+            // Animate card shuffling
+            function animateShuffle() {
+                const cards = document.querySelectorAll('.card');
+                
+                cards.forEach((card, index) => {
+                    // Random rotation and position
+                    const randomX = Math.random() * 100 - 50;
+                    const randomY = Math.random() * 100 - 50;
+                    const randomRotate = Math.random() * 360;
+                    
+                    setTimeout(() => {
+                        card.style.transform = `translate(${randomX}px, ${randomY}px) rotate(${randomRotate}deg)`;
+                        
+                        setTimeout(() => {
+                            card.style.transform = 'translateZ(' + (-index * 0.5) + 'px)';
+                        }, 500);
+                    }, index * 100);
+                });
+                
+                // 修改跳转逻辑，传递牌阵类型参数
+                setTimeout(() => {
+                    const spreadType = sessionStorage.getItem('selectedSpreadType') || 'three-card';
+                    window.location.href = `塔罗事占.html?spread=${spreadType}`;
+                }, 2000);
+            }
+            
+            // Play sound effects
+            function playSound(type) {
+                const audio = new Audio();
+                
+                switch(type) {
+                    case 'fire':
+                        audio.src = 'assets/tarot/sounds/fire.mp3';
+                        break;
+                    case 'water':
+                        audio.src = 'assets/tarot/sounds/water.mp3';
+                        break;
+                    case 'air':
+                        audio.src = 'assets/tarot/sounds/air.mp3';
+                        break;
+                    case 'earth':
+                        audio.src = 'assets/tarot/sounds/earth.mp3';
+                        break;
+                    case 'crystal':
+                        audio.src = 'assets/tarot/sounds/crystal.mp3';
+                        break;
+                    case 'shuffle':
+                        audio.src = 'assets/tarot/sounds/shuffle.mp3';
+                        break;
+                }
+                
+                audio.volume = 0.3;
+                audio.play().catch(e => console.log('Audio playback failed:', e));
+            }
+        });
+    </script>
+</body>
+</html> 
