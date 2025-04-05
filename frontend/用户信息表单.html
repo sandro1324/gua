@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>玄机八字分析 - 个人信息录入</title>
+    <a href="index.html" class="return-home"><i class="fas fa-home"></i></a>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=ZCOOL+QingKe+HuangYou&display=swap" rel="stylesheet">
     
@@ -19,6 +20,22 @@
             --text: #2c3e50; 
             --accent: #e6f0ff; /* 天青辅助色 */
             --border: #dcdff1;
+        }
+
+        /* 返回主页按钮 */
+        .return-home {
+            position: absolute;
+            top: 60px;
+            left: 20px;
+            font-size: 1.5rem;
+            color: var(--text);
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        
+        .return-home:hover {
+            color: var(--primary);
+            transform: scale(1.1);
         }
 
         /* 语言切换按钮 */

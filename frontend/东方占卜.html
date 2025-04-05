@@ -6,6 +6,21 @@
     <title>Eastern Divination</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
+        .return-home {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            font-size: 1.5rem;
+            color: var(--primary-color);
+            text-decoration: none;
+            transition: all 0.3s ease;
+            z-index: 10;
+        }
+        
+        .return-home:hover {
+            color: var(--second-color);
+            transform: scale(1.1);
+        }
         :root {
             --primary-color: #d4af37;
             --second-color: #6b5b45;
@@ -441,6 +456,9 @@
     </style>
 </head>
 <body>
+    <a href="index.html" class="return-home">
+        <i class="fas fa-home"></i>
+    </a>
     <div class="bagua-bg"></div>
     <div id="overlay" class="overlay" style="display: none;"></div>
     

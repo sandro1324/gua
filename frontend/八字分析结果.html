@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>八字分析结果</title>
+    <a href="index.html" class="return-home"><i class="fas fa-home"></i></a>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
     <!-- 加载lunar.js库 -->
@@ -30,6 +31,22 @@
             margin: 0;
             padding: 20px;
             line-height: 1.6;
+        }
+
+        /* 返回主页按钮 */
+        .return-home {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            font-size: 1.5rem;
+            color: var(--text);
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        
+        .return-home:hover {
+            color: var(--primary);
+            transform: scale(1.1);
         }
 
         /* 语言切换按钮样式 */
