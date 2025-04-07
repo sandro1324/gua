@@ -1,30 +1,14 @@
-from fastapi import FastAPI, HTTPException
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import StreamingResponse
-from pydantic import BaseModel
+from flask import Flask, request, jsonify, Response, stream_with_context
+from flask_cors import CORS
 import os
 import requests
-from typing import Generator
+import json
 
 # 配置API密钥
 os.environ["ARK_API_KEY"] = "b8630f89-673f-4ebb-ac6f-821b95442cbf"  # 替换成实际密钥
 
-app = FastAPI()
-
-# 配置CORS跨域
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-    expose_headers=["*"]
-)
-
-class TarotRequest(BaseModel):
-    question: str
-    card_name: str
-    position: str  # 正位/逆位
+app = Flask(__name__)
+CORS(app)
 
 def call_volcengine_api(system_prompt: str, user_prompt: str):
     """调用火山引擎API的核心函数"""
@@ -50,12 +34,20 @@ def call_volcengine_api(system_prompt: str, user_prompt: str):
         return response.json()["choices"][0]["message"]["content"]
     
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        return str(e), 500
 
-@app.post("/api/tarot")
-async def tarot_reading(request: TarotRequest):
+@app.route('/api/tarot', methods=['POST'])
+def tarot_reading():
     """塔罗牌标准解读"""
     try:
+        data = request.get_json()
+        question = data.get('question')
+        card_name = data.get('card_name')
+        position = data.get('position')
+
+        if not all([question, card_name, position]):
+            return jsonify({"error": "Missing required fields"}), 400
+
         system_prompt = """# Role: Master Tarot Analyst
 You are an expert Tarot card reader with deep knowledge of both traditional and modern Tarot interpretations.
 
@@ -90,34 +82,42 @@ Practical advice and insights based on the card's message.
 4. Consider both the card's traditional meaning and its position
 5. Provide actionable insights when possible"""
 
-        user_prompt = f"用户问题：{request.question}\n抽到卡牌：{request.card_name}（{request.position}）"
+        user_prompt = f"用户问题：{question}\n抽到卡牌：{card_name}（{position}）"
         
         interpretation = call_volcengine_api(system_prompt, user_prompt)
         
-        return {
-            "card_name": request.card_name,
-            "position": request.position,
+        return jsonify({
+            "card_name": card_name,
+            "position": position,
             "interpretation": interpretation
-        }
+        })
         
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        return jsonify({"error": str(e)}), 500
 
-@app.post("/api/tarot/stream")
-async def tarot_stream(request: TarotRequest):
+@app.route('/api/tarot/stream', methods=['GET'])
+def tarot_stream():
     """塔罗牌流式解读"""
-    async def generate():
-        url = "https://ark.cn-beijing.volces.com/api/v3/chat/completions"
-        headers = {
-            "Authorization": f"Bearer {os.environ.get('ARK_API_KEY')}",
-            "Content-Type": "application/json"
-        }
-        payload = {
-            "model": "ep-20250311174845-dzj2f",
-            "messages": [
-                {
-                    "role": "system",
-                    "content": """# Role: Master Tarot Analyst
+    try:
+        question = request.args.get('question')
+        card_name = request.args.get('card_name')
+        position = request.args.get('position')
+
+        if not all([question, card_name, position]):
+            return jsonify({"error": "Missing required fields"}), 400
+
+        def generate():
+            url = "https://ark.cn-beijing.volces.com/api/v3/chat/completions"
+            headers = {
+                "Authorization": f"Bearer {os.environ.get('ARK_API_KEY')}",
+                "Content-Type": "application/json"
+            }
+            payload = {
+                "model": "ep-20250311174845-dzj2f",
+                "messages": [
+                    {
+                        "role": "system",
+                        "content": """# Role: Master Tarot Analyst
 You are an expert Tarot card reader with deep knowledge of both traditional and modern Tarot interpretations.
 
 ## Core Skills:
@@ -150,25 +150,27 @@ Practical advice and insights based on the card's message.
 3. Be specific and relevant to the querent's question
 4. Consider both the card's traditional meaning and its position
 5. Provide actionable insights when possible"""
-                },
-                {
-                    "role": "user",
-                    "content": f"用户问题：{request.question}\n抽到卡牌：{request.card_name}（{request.position}）"
-                }
-            ],
-            "stream": True,
-            "temperature": 1,
-            "top_p": 0.7,
-            "max_tokens": 2025
-        }
-        
-        with requests.post(url, headers=headers, json=payload, stream=True) as r:
-            for chunk in r.iter_content():
-                if chunk:
-                    yield chunk.decode('utf-8')
+                    },
+                    {
+                        "role": "user",
+                        "content": f"用户问题：{question}\n抽到卡牌：{card_name}（{position}）"
+                    }
+                ],
+                "stream": True,
+                "temperature": 1,
+                "top_p": 0.7,
+                "max_tokens": 2025
+            }
+            
+            with requests.post(url, headers=headers, json=payload, stream=True) as r:
+                for chunk in r.iter_content():
+                    if chunk:
+                        yield f"data: {json.dumps({'interpretation': chunk.decode('utf-8')})}\n\n"
 
-    return StreamingResponse(generate(), media_type="text/event-stream")
+        return Response(stream_with_context(generate()), mimetype='text/event-stream')
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=5000)  # 使用不同端口 
+    app.run(host="0.0.0.0", port=5000) 

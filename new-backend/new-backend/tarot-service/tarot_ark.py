@@ -16,37 +16,24 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD"],
+    allow_methods=["*"],  # 允许所有方法（包括 HEAD）
     allow_headers=["*"],
     expose_headers=["*"]
 )
 
-# 显式处理 OPTIONS 请求
-@app.options("/api/interpret")
-async def options_interpret():
-    return JSONResponse(
-        status_code=200,
-        headers={
-            "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Methods": "POST, OPTIONS, HEAD",
-            "Access-Control-Allow-Headers": "Content-Type, Authorization"
-        }
-    )
+# 健康检查路由
+@app.get("/")
+async def health_check():
+    return {"status": "ok", "message": "Tarot Service is running"}
 
 # 显式处理 HEAD 请求
 @app.head("/")
 async def head_root():
     return {"status": "ok"}
-
-# 健康检查路由
-@app.get("/")
-async def health_check():
-    return {"status": "ok", "message": "Service is running"}
-
-class DivinationRequest(BaseModel):
-    method: str
-    hexagram: str
+class TarotRequest(BaseModel):
     question: str
+    card_name: str
+    position: str
 
 @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=4, max=10))
 def call_volcengine_api(system_prompt: str, user_prompt: str):
@@ -54,7 +41,7 @@ def call_volcengine_api(system_prompt: str, user_prompt: str):
     直接调用火山引擎豆包API的核心函数
     """
     try:
-        # API配置（与curl示例一致）
+        # API配置
         url = "https://ark.cn-beijing.volces.com/api/v3/chat/completions"
         headers = {
             "Content-Type": "application/json",
@@ -79,37 +66,32 @@ def call_volcengine_api(system_prompt: str, user_prompt: str):
         return response.json()["choices"][0]["message"]["content"]
         
     except requests.exceptions.HTTPError as e:
-        print(f"HTTP错误: {e.response.status_code} - {e.response.text}")
+        print(f"火山引擎API错误详情: {e.response.status_code} - {e.response.text}")
         raise
     except Exception as e:
         print(f"API调用失败: {str(e)}")
         raise
 
-@app.post("/api/interpret")
-async def interpret(request: DivinationRequest):
+@app.post("/api/tarot")
+async def get_tarot_reading(request: TarotRequest):
     try:
-        # 验证卦象数据
-        hexagram_lines = [x for x in request.hexagram.split(',') if x]
-        if len(hexagram_lines) != 6:
-            raise HTTPException(status_code=400, detail="卦象数据不完整")
-
-        # 系统提示词（保持原有逻辑）
-        system_prompt = """# Role: Metaphysics Master (STRICTLY ENGLISH ONLY)
+        # 系统提示词
+        system_prompt = """# Role: Tarot Master (STRICTLY ENGLISH ONLY)
 You are an AI that MUST respond in **English only**. 
 **Absolutely DO NOT use any Chinese characters** in your response.
 
 ## Core Task:
-Interpret the hexagram strictly in English based on I Ching principles.
+Interpret the tarot card strictly in English based on traditional tarot principles.
 
 ## Response Format:
-[Hexagram Summary]
-One clear English sentence describing the overall fortune.
+[Card Meaning]
+One clear English sentence describing the card's meaning.
 
-[Detailed Analysis]
-Three distinct points in English explaining the hexagram's meaning.
+[Current Situation]
+Three distinct points in English explaining the current situation.
 Each point should be clear and specific.
 
-[Actionable Advice]
+[Guidance]
 Three practical recommendations in English.
 Make them specific and actionable.
 
@@ -118,41 +100,24 @@ Make them specific and actionable.
 2. Format sections with square brackets [ ]
 3. If any Chinese characters appear, the system will crash
 4. Keep responses clear and direct
-5. Use standard English terminology for I Ching concepts
+5. Use standard English terminology for tarot concepts"""
 
-## Language Enforcement:
-- MUST use English only
-- NO Chinese characters allowed
-- NO mixed language content
-- NO transliterated Chinese terms
-- Use Western equivalents for all concepts
-
-## Output Validation:
-Before responding, verify that:
-1. All text is in English
-2. No Chinese characters are present
-3. Sections use [ ] format
-4. Content is clear and understandable"""
-
-        # 用户提示词（保持原有逻辑）
-        hexagram_description = '\n'.join([f"Line {i+1}: {'Yang' if line == '1' else 'Yin'}" for i, line in enumerate(hexagram_lines)])
+        # 用户提示词
         user_prompt = f"""**CRITICAL: RESPOND IN ENGLISH ONLY. CHINESE CHARACTERS ARE STRICTLY FORBIDDEN.**
 
-Hexagram Information:
-- Method: {request.method}
+Tarot Information:
+- Card: {request.card_name}
+- Position: {request.position}
 - Question: {request.question}
-
-Hexagram Structure:
-{hexagram_description}
 
 Response Requirements:
 1. Use clear, professional English only
 2. Format all sections with [ ]
 3. NO Chinese characters allowed
 4. Structure your response as:
-   [Hexagram Summary]
-   [Detailed Analysis]
-   [Actionable Advice]
+   [Card Meaning]
+   [Current Situation]
+   [Guidance]
 
 Verification Steps:
 1. Confirm all text is in English
@@ -171,9 +136,9 @@ IMPORTANT: Any Chinese characters will cause system failure."""
             raise HTTPException(status_code=500, detail="响应包含中文字符")
         
         return {
-            "hexagram_name": f"{request.method}",
-            "interpretation": interpretation,
-            "fortune_level": 3  # 默认值
+            "card_name": request.card_name,
+            "position": request.position,
+            "interpretation": interpretation
         }
     except Exception as e:
         print("发生错误:", str(e))
@@ -181,14 +146,14 @@ IMPORTANT: Any Chinese characters will cause system failure."""
 
 if __name__ == "__main__":
     import uvicorn
-    port = int(os.environ.get("PORT", 8000))
+    port = int(os.environ.get("PORT", 10000))
     uvicorn.run(
-        "main:app",
+        "tarot_ark:app",
         host="0.0.0.0",
         port=port,
         reload=False,
         workers=1,
         log_level="info",
-        proxy_headers=True,
+        proxy_headers=True,  # 确保此行缩进与其他参数一致
         forwarded_allow_ips="*"
     )
