@@ -1,24 +1,13 @@
 {
   "version": 2,
-  "builds": [{ "src": "**/*", "use": "@vercel/static" }],
   "routes": [
-    {
-      "src": "/(.*)",
-      "headers": { "Location": "/\\L$1" },
-      "status": 301
-    },
-    {
-      "src": "/cards/(?<path>.*)",
-      "dest": "/cards/\\L$path"
-    },
-    {
-      "src": "/sounds/(?<path>.*)",
-      "dest": "/sounds/\\L$path"
-    },
-    { 
-      "src": "/(.*)",
-      "dest": "/index.html",
-      "headers": { "Content-Type": "text/html" }
-    }
+    { "handle": "filesystem" },
+    { "src": "/sounds/.*", "dest": "/sounds/$1" },
+    { "src": "/cards/.*", "dest": "/cards/$1" },
+    { "src": "/js/.*", "dest": "/js/$1" },
+    { "src": "/(.*)", "dest": "/index.html" }
+  ],
+  "builds": [
+    { "src": "**/*", "use": "@vercel/static" }
   ]
 }
