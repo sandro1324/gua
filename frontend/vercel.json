@@ -1,0 +1,28 @@
+{
+  "version": 2,
+  "env": {
+    "JSONBIN_API_KEY": "@jsonbin_api_key",
+    "JSONBIN_BIN_ID": "@jsonbin_bin_id"
+  },
+  "builds": [
+    { "src": "**/*", "use": "@vercel/static" }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "/api/$1"
+    },
+    {
+      "src": "/cards/(?<path>.*)",
+      "dest": "/cards/$path"
+    },
+    {
+      "src": "/sounds/(?<path>.*)",
+      "dest": "/sounds/$path"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
+    }
+  ]
+}
